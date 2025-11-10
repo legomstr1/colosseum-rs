@@ -50,6 +50,16 @@ impl GameState {
 }
 
 #[derive(Clone, Debug)]
+pub struct Trade {
+    pub proposer_id: u8,
+    pub target_id: u8,
+    pub assets_given: Vec<Asset>,
+    pub money_given: u8,
+    pub assets_received: Vec<Asset>,
+    pub money_received: u8,
+}
+
+#[derive(Clone, Debug)]
 pub enum Phase {
     Investing {
         active_player: u8,
@@ -62,6 +72,7 @@ pub enum Phase {
     },
     Trading {
         active_player: u8,
+        pending_trade: Option<Trade>,
     },
     Producing {
         active_player: u8,

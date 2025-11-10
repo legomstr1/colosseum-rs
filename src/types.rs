@@ -122,3 +122,67 @@ impl Board {
         self.resting_places.contains(&position)
     }
 }
+
+pub enum Action {
+    // Investing
+    BuyEvent {
+        id: u8,
+    },
+    ExpandArena {
+        space: u8,
+    },
+    BuySeasonTicket,
+    BuildLoge,
+    ExtraInvestSpecialEvent,
+    ExtraInvestTwoMedals,
+    PassInvesting,
+
+    // Acquiring
+    StartBid {
+        batch: u8,
+        bid: u8,
+    },
+    Bid {
+        bid: u8,
+    },
+    PassBid,
+    PassAcquiring,
+
+    // Trading
+    ProposeTrade {
+        player_id: u8,
+        assets_given: Vec<Asset>,
+        money_given: u8,
+        assets_received: Vec<Asset>,
+        money_received: u8,
+    },
+    AcceptTrade,
+    RejectTrade,
+    PassTrading,
+
+    // Producing
+    MoveNoble {
+        noble_idx: u8,
+        dice_roll: u8,
+    },
+    ExchangeMedalForMove {
+        noble_idx: u8,
+        dice_roll: u8,
+    },
+    ExchangeMedalForPoints,
+    ProduceEvent {
+        id: u8,
+    },
+    PassProducing,
+
+    // Closing
+    DiscardAsset {
+        asset: Asset,
+    },
+    StealAsset {
+        asset: Asset,
+    },
+
+    // Medals
+    ExchangeMedalForCoins,
+}

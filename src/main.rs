@@ -1,6 +1,9 @@
 use serde::Deserialize;
 use std::collections::HashMap;
 
+mod game_state;
+mod types;
+
 #[derive(Debug, Deserialize)]
 struct EventsData {
     events: Vec<Event>,
