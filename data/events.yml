@@ -4,154 +4,441 @@ events:
     cost: 0
     base_score: 7
     size: 0
-    requirements:
-      - Gladiator
-      - Gladiator
-      - Decoration
-    penalty_scores:
-      - 5
-      - 3
+    requirements: [Gladiator, Gladiator, Decoration]
+    penalty_scores: [5, 3]
 
   - id: 2
     name: "Amphitryon"
     cost: 0
     base_score: 7
     size: 0
-    requirements:
-      - Comedian
-      - Comedian
-      - Decoration
-    penalty_scores:
-      - 5
-      - 3
+    requirements: [Comedian, Comedian, Decoration]
+    penalty_scores: [5, 3]
 
   - id: 3
     name: "Ode to Aurora"
     cost: 0
     base_score: 7
     size: 0
-    requirements:
-      - Musician
-      - Musician
-      - Scenery
-    penalty_scores:
-      - 5
-      - 3
+    requirements: [Musician, Musician, Scenery]
+    penalty_scores: [5, 3]
 
   - id: 4
     name: "Race of Janus"
     cost: 0
     base_score: 9
     size: 0
-    requirements:
-      - Gladiator
-      - Gladiator
-      - Horse
-      - Horse
-    penalty_scores:
-      - 7
-      - 5
-      - 3
+    requirements: [Gladiator, Gladiator, Horse, Horse]
+    penalty_scores: [7, 5, 3]
 
   - id: 5
     name: "Naumachia"
     cost: 0
     base_score: 9
     size: 0
-    requirements:
-      - Gladiator
-      - Gladiator
-      - Ship
-      - Ship
-    penalty_scores:
-      - 7
-      - 5
-      - 3
+    requirements: [Gladiator, Gladiator, Ship, Ship]
+    penalty_scores: [7, 5, 3]
 
   - id: 6
     name: "Venatio"
     cost: 0
     base_score: 11
     size: 0
-    requirements:
-      - Horse
-      - Horse
-      - Lion
-      - Lion
-      - Cage
-    penalty_scores:
-      - 9
-      - 7
-      - 5
-      - 2
+    requirements: [Horse, Horse, Lion, Lion, Cage]
+    penalty_scores: [9, 7, 5, 2]
 
   - id: 7
     name: "The Last of the Samnites"
     cost: 0
     base_score: 11
     size: 0
-    requirements:
-      - Gladiator
-      - Gladiator
-      - Gladiator
-      - Scenery
-      - Decoration
-    penalty_scores:
-      - 9
-      - 7
-      - 5
-      - 2
+    requirements: [Gladiator, Gladiator, Gladiator, Scenery, Decoration]
+    penalty_scores: [9, 7, 5, 2]
 
   - id: 8
     name: "Drama Ultima"
     cost: 0
     base_score: 12
     size: 0
-    requirements:
-      - Comedian
-      - Comedian
-      - Comedian
-      - Torch
-      - Scenery
-      - Scenery
-    penalty_scores:
-      - 10
-      - 8
-      - 5
-      - 2
+    requirements: [Comedian, Comedian, Comedian, Torch, Scenery, Scenery]
+    penalty_scores: [10, 8, 5, 2]
 
   - id: 9
     name: "Anthem to Cupidon"
     cost: 0
     base_score: 12
     size: 0
-    requirements:
-      - Musician
-      - Musician
-      - Musician
-      - Comedian
-      - Scenery
-      - Decoration
-    penalty_scores:
-      - 10
-      - 8
-      - 5
-      - 2
+    requirements: [Musician, Musician, Musician, Comedian, Scenery, Decoration]
+    penalty_scores: [10, 8, 5, 2]
 
   - id: 10
     name: "Cavalry of Spartacus"
     cost: 0
     base_score: 12
     size: 0
+    requirements: [Gladiator, Gladiator, Gladiator, Horse, Horse, Horse]
+    penalty_scores: [10, 8, 5, 2]
+
+  - id: 11
+    name: "Amphitrite's Anger"
+    cost: 13
+    base_score: 17
+    size: 1
     requirements:
-      - Gladiator
-      - Gladiator
-      - Gladiator
-      - Horse
-      - Horse
-      - Horse
-    penalty_scores:
-      - 10
-      - 8
-      - 5
-      - 2
+      [
+        Gladiator,
+        Gladiator,
+        Gladiator,
+        Ship,
+        Ship,
+        Ship,
+        Decoration,
+        Decoration,
+      ]
+    penalty_scores: [14, 11, 8, 5, 2]
+
+  - id: 12
+    name: "Cave Leonem Cruciatum"
+    cost: 13
+    base_score: 17
+    size: 1
+    requirements:
+      [Gladiator, Gladiator, Gladiator, Lion, Lion, Lion, Cage, Cage]
+    penalty_scores: [14, 11, 8, 5, 2]
+
+  - id: 13
+    name: "Retiarius vs. Secutor"
+    cost: 14
+    base_score: 18
+    size: 1
+    requirements:
+      [
+        Gladiator,
+        Gladiator,
+        Horse,
+        Horse,
+        Chariot,
+        Chariot,
+        Scenery,
+        Decoration,
+      ]
+    penalty_scores: [15, 12, 9, 6, 3]
+
+  - id: 14
+    name: "Satyricon of Momus"
+    cost: 14
+    base_score: 18
+    size: 1
+    requirements:
+      [Comedian, Comedian, Priest, Priest, Torch, Torch, Scenery, Decoration]
+    penalty_scores: [15, 12, 9, 6, 3]
+
+  - id: 15
+    name: "Lyres of Mercury"
+    cost: 17
+    base_score: 20
+    size: 1
+    requirements:
+      [
+        Musician,
+        Musician,
+        Musician,
+        Priest,
+        Chariot,
+        Torch,
+        Torch,
+        Decoration,
+        Decoration,
+      ]
+    penalty_scores: [17, 14, 11, 7, 3]
+
+  - id: 16
+    name: "The Ponies of Epona"
+    cost: 20
+    base_score: 23
+    size: 1
+    requirements:
+      [
+        Gladiator,
+        Gladiator,
+        Gladiator,
+        Priest,
+        Horse,
+        Horse,
+        Horse,
+        Scenery,
+        Scenery,
+      ]
+    penalty_scores: [20, 16, 12, 8, 4]
+
+  - id: 17
+    name: "Bacchus and the Nymphs"
+    cost: 21
+    base_score: 25
+    size: 1
+    requirements:
+      [Musician, Musician, Priest, Priest, Priest, Torch, Torch, Torch, Scenery]
+    penalty_scores: [22, 18, 14, 10, 5]
+
+  - id: 18
+    name: "Mare Spielbergus"
+    cost: 22
+    base_score: 27
+    size: 1
+    requirements:
+      [Gladiator, Gladiator, Gladiator, Ship, Ship, Ship, Cage, Cage, Scenery]
+    penalty_scores: [22, 18, 14, 10, 5]
+
+  - id: 19
+    name: "Lions' Procession"
+    cost: 24
+    base_score: 30
+    size: 1
+    requirements:
+      [Musician, Musician, Comedian, Lion, Lion, Lion, Cage, Cage, Decoration]
+    penalty_scores: [26, 22, 18, 14, 9, 4]
+
+  - id: 20
+    name: "Circus Maximus"
+    cost: 25
+    base_score: 32
+    size: 1
+    requirements:
+      [
+        Gladiator,
+        Gladiator,
+        Gladiator,
+        Horse,
+        Horse,
+        Horse,
+        Chariot,
+        Chariot,
+        Chariot,
+        Decoration,
+      ]
+    penalty_scores: [28, 24, 20, 15, 10, 5]
+
+  - id: 21
+    name: "The Dialogues of Pluto"
+    cost: 25
+    base_score: 33
+    size: 2
+    requirements:
+      [
+        Comedian,
+        Comedian,
+        Chariot,
+        Chariot,
+        Cage,
+        Cage,
+        Cage,
+        Torch,
+        Scenery,
+        Scenery,
+      ]
+    penalty_scores: [29, 25, 20, 15, 10, 5]
+
+  - id: 22
+    name: "And Tellus Created the Earth"
+    cost: 26
+    base_score: 35
+    size: 2
+    requirements:
+      [
+        Musician,
+        Comedian,
+        Comedian,
+        Priest,
+        Priest,
+        Priest,
+        Chariot,
+        Torch,
+        Torch,
+        Decoration,
+        Decoration,
+      ]
+    penalty_scores: [30, 25, 20, 15, 10, 5]
+
+  - id: 23
+    name: "Safari Optimus Maximus"
+    cost: 27
+    base_score: 36
+    size: 2
+    requirements:
+      [
+        Gladiator,
+        Gladiator,
+        Gladiator,
+        Gladiator,
+        Lion,
+        Lion,
+        Lion,
+        Cage,
+        Cage,
+        Scenery,
+        Scenery,
+      ]
+    penalty_scores: [31, 26, 21, 16, 11, 5]
+
+  - id: 24
+    name: "The Galleys of Apollo"
+    cost: 28
+    base_score: 38
+    size: 2
+    requirements:
+      [
+        Gladiator,
+        Gladiator,
+        Gladiator,
+        Gladiator,
+        Ship,
+        Ship,
+        Ship,
+        Ship,
+        Comedian,
+        Torch,
+        Decoration,
+      ]
+    penalty_scores: [33, 28, 23, 18, 12, 6]
+
+  - id: 25
+    name: "Legendary Lion Hunters"
+    cost: 29
+    base_score: 42
+    size: 2
+    requirements:
+      [
+        Gladiator,
+        Gladiator,
+        Gladiator,
+        Comedian,
+        Lion,
+        Lion,
+        Lion,
+        Cage,
+        Cage,
+        Torch,
+        Scenery,
+        Scenery,
+        Decoration,
+      ]
+    penalty_scores: [37, 32, 27, 21, 15, 8]
+
+  - id: 26
+    name: "Venus' Equestrian Cavalcade"
+    cost: 32
+    base_score: 44
+    size: 2
+    requirements:
+      [
+        Musician,
+        Musician,
+        Musician,
+        Comedian,
+        Priest,
+        Horse,
+        Horse,
+        Horse,
+        Chariot,
+        Chariot,
+        Chariot,
+        Torch,
+        Scenery,
+      ]
+    penalty_scores: [39, 33, 27, 21, 15, 8]
+
+  - id: 27
+    name: "Neptune's Fury"
+    cost: 35
+    base_score: 45
+    size: 2
+    requirements:
+      [
+        Gladiator,
+        Gladiator,
+        Gladiator,
+        Ship,
+        Ship,
+        Ship,
+        Ship,
+        Comedian,
+        Comedian,
+        Priest,
+        Torch,
+        Torch,
+        Decoration,
+      ]
+    penalty_scores: [40, 34, 28, 22, 15, 8]
+
+  - id: 28
+    name: "Isis' Revealed Secrets"
+    cost: 35
+    base_score: 45
+    size: 2
+    requirements:
+      [
+        Musician,
+        Musician,
+        Musician,
+        Comedian,
+        Comedian,
+        Comedian,
+        Priest,
+        Priest,
+        Torch,
+        Torch,
+        Scenery,
+        Scenery,
+        Decoration,
+      ]
+    penalty_scores: [40, 34, 28, 22, 15, 8]
+
+  - id: 29
+    name: "Great Prophecies of Jupiter"
+    cost: 37
+    base_score: 47
+    size: 2
+    requirements:
+      [
+        Gladiator,
+        Musician,
+        Comedian,
+        Priest,
+        Priest,
+        Priest,
+        Horse,
+        Torch,
+        Torch,
+        Torch,
+        Scenery,
+        Scenery,
+        Decoration,
+        Decoration,
+      ]
+    penalty_scores: [42, 37, 31, 25, 18, 8]
+
+  - id: 30
+    name: "Caesar's Triumphal March"
+    cost: 40
+    base_score: 50
+    size: 2
+    requirements:
+      [
+        Gladiator,
+        Gladiator,
+        Musician,
+        Musician,
+        Comedian,
+        Comedian,
+        Priest,
+        Horse,
+        Horse,
+        Horse,
+        Chariot,
+        Chariot,
+        Chariot,
+        Torch,
+        Torch,
+        Decoration,
+      ]
+    penalty_scores: [45, 40, 34, 28, 20, 10]
