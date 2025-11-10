@@ -1,6 +1,6 @@
 #[derive(Clone, Debug)]
 pub struct PlayerState {
-    pub id: PlayerId,
+    pub name: String,
     pub coins: u32,
     pub assets: Vec<Asset>,
     pub arena_level: u8,
@@ -13,9 +13,9 @@ pub struct PlayerState {
 }
 
 impl PlayerState {
-    pub fn new(id: PlayerId) -> Self {
+    pub fn new(name: String) -> Self {
         Self {
-            id,
+            name,
             coins: 30, // Starting coins in Colosseum
             assets: Vec::new(),
             arena_level: 0,
@@ -35,8 +35,7 @@ pub struct Event {
     pub base_score: u8,
     pub size: u8,
     pub requirements: Vec<Asset>,
-    pub penalties: Vec<u8>,
-    pub completed: bool,
+    pub penalty_scores: Vec<u8>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]

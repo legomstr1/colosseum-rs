@@ -37,7 +37,9 @@ impl GameState {
         Self {
             players,
             current_round: 1,
-            phase,
+            phase: Phase::Investing {
+                active_player: PlayerId(0),
+            },
             remaining_assets,
             available_medals: 18,
             avaialble_tickets: 10,
@@ -50,20 +52,19 @@ impl GameState {
 #[derive(Clone, Debug)]
 pub enum Phase {
     Investing {
-        active_player: PlayerId,
+        active_player: u8,
     },
     Acquiring {
-        active_player: PlayerId,
-        current_market: u8,
-        current_bidder: Option<PlayerId>,
-        current_bid: u32,
+        active_player: u8,
+        current_batch: u8,
+        current_bidder: u8,
+        current_bid: u8,
     },
     Trading {
-        active_player: PlayerId,
+        active_player: u8,
     },
     Producing {
-        player_order: Vec<PlayerId>,
-        selections_made: usize,
+        active_player: u8,
     },
     Closing,
     GameOver,

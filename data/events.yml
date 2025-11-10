@@ -1,8 +1,157 @@
 events:
-  - id:
-    name:
-    cost:
-    base_score:
-    size:
+  - id: 1
+    name: "Tribute to Munus"
+    cost: 0
+    base_score: 7
+    size: 0
     requirements:
-    penalties:
+      - Gladiator
+      - Gladiator
+      - Decoration
+    penalty_scores:
+      - 5
+      - 3
+
+  - id: 2
+    name: "Amphitryon"
+    cost: 0
+    base_score: 7
+    size: 0
+    requirements:
+      - Comedian
+      - Comedian
+      - Decoration
+    penalty_scores:
+      - 5
+      - 3
+
+  - id: 3
+    name: "Ode to Aurora"
+    cost: 0
+    base_score: 7
+    size: 0
+    requirements:
+      - Musician
+      - Musician
+      - Scenery
+    penalty_scores:
+      - 5
+      - 3
+
+  - id: 4
+    name: "Race of Janus"
+    cost: 0
+    base_score: 9
+    size: 0
+    requirements:
+      - Gladiator
+      - Gladiator
+      - Horse
+      - Horse
+    penalty_scores:
+      - 7
+      - 5
+      - 3
+
+  - id: 5
+    name: "Naumachia"
+    cost: 0
+    base_score: 9
+    size: 0
+    requirements:
+      - Gladiator
+      - Gladiator
+      - Ship
+      - Ship
+    penalty_scores:
+      - 7
+      - 5
+      - 3
+
+  - id: 6
+    name: "Venatio"
+    cost: 0
+    base_score: 11
+    size: 0
+    requirements:
+      - Horse
+      - Horse
+      - Lion
+      - Lion
+      - Cage
+    penalty_scores:
+      - 9
+      - 7
+      - 5
+      - 2
+
+  - id: 7
+    name: "The Last of the Samnites"
+    cost: 0
+    base_score: 11
+    size: 0
+    requirements:
+      - Gladiator
+      - Gladiator
+      - Gladiator
+      - Scenery
+      - Decoration
+    penalty_scores:
+      - 9
+      - 7
+      - 5
+      - 2
+
+  - id: 8
+    name: "Drama Ultima"
+    cost: 0
+    base_score: 12
+    size: 0
+    requirements:
+      - Comedian
+      - Comedian
+      - Comedian
+      - Torch
+      - Scenery
+      - Scenery
+    penalty_scores:
+      - 10
+      - 8
+      - 5
+      - 2
+
+  - id: 9
+    name: "Anthem to Cupidon"
+    cost: 0
+    base_score: 12
+    size: 0
+    requirements:
+      - Musician
+      - Musician
+      - Musician
+      - Comedian
+      - Scenery
+      - Decoration
+    penalty_scores:
+      - 10
+      - 8
+      - 5
+      - 2
+
+  - id: 10
+    name: "Cavalry of Spartacus"
+    cost: 0
+    base_score: 12
+    size: 0
+    requirements:
+      - Gladiator
+      - Gladiator
+      - Gladiator
+      - Horse
+      - Horse
+      - Horse
+    penalty_scores:
+      - 10
+      - 8
+      - 5
+      - 2
