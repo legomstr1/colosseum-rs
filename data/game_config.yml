@@ -1,0 +1,53 @@
+starting_positions:
+  3: [[8, 9], [21, 22], [32, 33]]
+  4: [[3, 4], [14, 15], [23, 24], [32, 33]]
+  5: [[2, 3], [8, 9], [15, 16], [23, 24], [32, 33]]
+
+noble_positions:
+  - [0, Emperor]
+  - [6, Senator]
+  - [12, Consul]
+  - [19, Senator]
+  - [26, Consul]
+  - [30, Senator]
+
+assets:
+  total:
+    Gladiator: 20
+    Comedian: 12
+    Musician: 12
+    Horse: 12
+    Torch: 12
+    Priest: 11
+    Ship: 11
+    Lion: 10
+    Scenery: 10
+    Decoration: 10
+    Chariot: 10
+    Cage: 10
+    Joker: 4
+    Emperor: 4
+    SpecialEvent: 4
+
+  starting_assets:
+    Gladiator: 10
+    Comedian: 5
+    Musician: 4
+    Horse: 6
+    Torch: 1
+    Priest: 1
+    Ship: 2
+    Lion: 2
+    Scenery: 4
+    Decoration: 3
+    Chariot: 1
+    Cage: 1
+
+  star_performers:
+    - Gladiator
+    - Ship
+    - Musician
+    - Comedian
+    - Priest
+    - Horse
+    - Lion
