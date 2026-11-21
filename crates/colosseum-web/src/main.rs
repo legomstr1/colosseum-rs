@@ -41,6 +41,8 @@ struct Cli {
 #[serde(rename_all = "lowercase")]
 enum SeatKind {
     Human,
+    Search,
+    House,
     Greedy,
     Random,
     Oracle,
@@ -232,6 +234,13 @@ async fn create_game(State(server): State<Shared>, Json(req): Json<NewGame>) -> 
             let bot_seed = seed.wrapping_add(i as u64 + 1);
             match kind {
                 SeatKind::Human => None,
+                SeatKind::Search => {
+                    // Results don't depend on the thread count, only the speed.
+                    let threads = std::thread::available_parallelism().map_or(4, |n| n.get());
+                    let cfg = colosseum_bot_search::Config { threads, ..Default::default() };
+                    Some(Box::new(colosseum_bot_search::SearchAgent::with_config(bot_seed, cfg)))
+                }
+                SeatKind::House => Some(Box::new(colosseum_bot_house::HouseAgent::new(bot_seed))),
                 SeatKind::Greedy => Some(Box::new(GreedyAgent::new(bot_seed))),
                 SeatKind::Random => Some(Box::new(RandomAgent::new(bot_seed))),
                 SeatKind::Oracle => Some(Box::new(colosseum_bot_oracle::OracleAgent::new(bot_seed))),
@@ -257,7 +266,7 @@ async fn create_game(State(server): State<Shared>, Json(req): Json<NewGame>) -> 
         kind: "round",
         text: format!("New game, seed {seed}"),
     });
-    session.run_bots();
+    tokio::task::block_in_place(|| session.run_bots());
 
     let mut games = server.games.lock().unwrap();
     let id = format!("{:x}", seed ^ (games.len() as u64).wrapping_mul(0x9e37_79b9_7f4a_7c15));
@@ -288,7 +297,7 @@ async fn post_action(State(server): State<Shared>, Path(id): Path<String>, Json(
     match s.game.apply(req.action) {
         Ok(events) => {
             s.record(&events);
-            s.run_bots();
+            tokio::task::block_in_place(|| s.run_bots());
             json_view(&id, s)
         }
         Err(e) => error(StatusCode::UNPROCESSABLE_ENTITY, e.reason),

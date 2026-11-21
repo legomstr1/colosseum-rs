@@ -60,7 +60,7 @@ impl Default for Config {
     }
 }
 
-pub fn make_bot(name: &str, seed: u64) -> Box<dyn Agent> {
+pub fn make_bot(name: &str, seed: u64) -> Box<dyn Agent + Send> {
     match name {
         "house" => Box::new(colosseum_bot_house::HouseAgent::new(seed)),
         "oracle" => Box::new(colosseum_bot_oracle::OracleAgent::new(seed)),
@@ -73,7 +73,7 @@ pub fn make_bot(name: &str, seed: u64) -> Box<dyn Agent> {
 pub struct SearchAgent {
     cfg: Config,
     rng: Rng,
-    base: Box<dyn Agent>,
+    base: Box<dyn Agent + Send>,
     decisions: Vec<Decision>,
 }
 
@@ -141,7 +141,7 @@ impl SearchAgent {
 
 /// Plays `game` to the end: `me` as `mine`, everyone else as `others`.
 fn playout(game: &mut Game, me: PlayerId, mine: &str, others: &str, seed: u64) {
-    let mut agents: Vec<Box<dyn Agent>> = (0..game.num_players())
+    let mut agents: Vec<Box<dyn Agent + Send>> = (0..game.num_players())
         .map(|i| make_bot(if i == me.0 { mine } else { others }, seed.wrapping_add(i as u64 * 7919)))
         .collect();
     let mut steps = 0;

@@ -76,7 +76,7 @@ fn main() {
                     let mut game = Game::new(config.clone(), 4, seed).unwrap();
                     let cfg = Config { rollout: rollout.clone(), ..Config::default() };
                     let mut search = SearchAgent::with_config(seed, cfg);
-                    let mut others: Vec<Box<dyn Agent>> = (0..4).map(|k| make_bot("house", seed * 10 + k)).collect();
+                    let mut others: Vec<Box<dyn Agent + Send>> = (0..4).map(|k| make_bot("house", seed * 10 + k)).collect();
                     let (mut won, mut paid, mut trades, mut events, mut final_buy) = ([0.0; 4], [0.0; 4], [0.0; 4], [0.0; 4], [0.0; 4]);
                     while let Some(p) = game.current_player() {
                         let legal = game.legal_actions();

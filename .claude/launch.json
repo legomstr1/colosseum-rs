@@ -4,7 +4,7 @@
     {
       "name": "colosseum-web",
       "runtimeExecutable": "cargo",
-      "runtimeArgs": ["run", "-p", "colosseum-web", "--", "--port", "8080"],
+      "runtimeArgs": ["run", "--release", "-p", "colosseum-web", "--", "--port", "8080"],
       "port": 8080
     },
     {

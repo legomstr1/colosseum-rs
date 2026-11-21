@@ -34,7 +34,7 @@ const NOBLES = {
 // Tokens that can't change hands in a trade.
 const UNTRADEABLE = new Set(['Emperor', 'SpecialEvent']);
 const SEAT_LABEL = {
-  human: 'Human', oracle: 'Oracle', maestro: 'Maestro', chameleon: 'Chameleon', trader: 'Trader', planner: 'Planner',
+  human: 'Human', search: 'Search (best)', house: 'House', oracle: 'Oracle', maestro: 'Maestro', chameleon: 'Chameleon', trader: 'Trader', planner: 'Planner',
   auctioneer: 'Auctioneer', showman: 'Showman', rollout: 'Rollout (slow)', greedy: 'Greedy', random: 'Random',
 };
 const PHASES = ['Investing', 'Acquiring', 'Trading', 'Producing', 'Closing'];
@@ -44,7 +44,7 @@ const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 
 let config = null;
 let view = null;
 let ui = freshUi();
-let setup = { seats: ['human', 'oracle', 'oracle'], seed: '' };
+let setup = { seats: ['human', 'house', 'house'], seed: '' };
 let handlers = [];
 let showPrograms = false;
 let showLog = false;
@@ -201,7 +201,7 @@ function renderSetup() {
       <div class="card"><h3>Players</h3>
         <div style="display:flex;flex-direction:column;gap:10px">${seats}</div>
         <div class="btns" style="margin-top:12px;justify-content:flex-start">
-          <button class="btn small" ${setup.seats.length >= max ? 'disabled' : ''} data-h="${on(() => { setup.seats.push('oracle'); render(); })}">Add player</button>
+          <button class="btn small" ${setup.seats.length >= max ? 'disabled' : ''} data-h="${on(() => { setup.seats.push('house'); render(); })}">Add player</button>
           <button class="btn small" ${setup.seats.length <= min ? 'disabled' : ''} data-h="${on(() => { setup.seats.pop(); render(); })}">Remove player</button>
         </div></div>
       <div class="row"><input class="input" id="seed" placeholder="Seed (optional)" value="${esc(setup.seed)}" style="width:170px">
