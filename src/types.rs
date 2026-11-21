@@ -1,14 +1,14 @@
 #[derive(Clone, Debug)]
 pub struct PlayerState {
     pub name: String,
-    pub coins: u32,
+    pub coins: u8,
     pub assets: Vec<Asset>,
     pub arena_level: u8,
     pub podiums: u8,
     pub loge: bool,
     pub season_tickets: u8,
     pub medals: u8,
-    pub score: u32,
+    pub score: u8,
     pub purchased: bool,
 }
 
@@ -126,10 +126,10 @@ impl Board {
 pub enum Action {
     // Investing
     BuyEvent {
-        id: u8,
+        id: u8, // Restriction: One of the events still available
     },
     ExpandArena {
-        space: u8,
+        space: u8, // Restriction: Space adjacent to existing arena spaces
     },
     BuySeasonTicket,
     BuildLoge,
@@ -139,48 +139,56 @@ pub enum Action {
 
     // Acquiring
     StartBid {
-        batch: u8,
-        bid: u8,
+        batch: u8, // Restriction: One of the available batches in the market
+        bid: u8, // Restriction: Higher than eight and within player's available coins + medals * 6
     },
     Bid {
-        bid: u8,
+        bid: u8, // Restriction: Higher than current bid and within player's available coins + medals * 6
     },
     PassBid,
     PassAcquiring,
 
     // Trading
+    InitiateTrade {
+        player_id: u8, // Restriction: One of the other players
+    },
     ProposeTrade {
-        player_id: u8,
-        assets_given: Vec<Asset>,
-        money_given: u8,
-        assets_received: Vec<Asset>,
-        money_received: u8,
+        assets_given: Vec<Asset>,    // Restriction: Assets owned by the proposer
+        money_given: u8,             // Restriction: Money owned by the proposer
+        assets_received: Vec<Asset>, // Restriction: Assets owned by the target player
+        money_received: u8,          // Restriction: Money owned by the target player
     },
     AcceptTrade,
     RejectTrade,
+    CounterTrade {
+        assets_given: Vec<Asset>,    // Restriction: Assets owned by the proposer
+        money_given: u8,             // Restriction: Money owned by the proposer
+        assets_received: Vec<Asset>, // Restriction: Assets owned by the target player
+        money_received: u8,          // Restriction: Money owned by the target player
+    },
     PassTrading,
 
     // Producing
     MoveNoble {
-        noble_idx: u8,
-        dice_roll: u8,
+        noble_idx: u8, // Restriction: One of the nobles on the board
+        spaces: u8,    // Restriction: one of or combined rolled dice values
     },
     ExchangeMedalForMove {
-        noble_idx: u8,
-        dice_roll: u8,
+        noble_idx: u8, // Restriction: One of the nobles on the board
+        spaces: i8,    // Restriction: -3 - -1 or 1 - 3
     },
     ExchangeMedalForPoints,
     ProduceEvent {
-        id: u8,
+        id: u8, // Restriction: One of the events that the player owns that they have enough assets to produce
     },
     PassProducing,
 
     // Closing
     DiscardAsset {
-        asset: Asset,
+        asset: Asset, // Restriction: Assets used in event production this round
     },
     StealAsset {
-        asset: Asset,
+        asset: Asset, // Restriction: Legal assets from player who won the round
     },
 
     // Medals

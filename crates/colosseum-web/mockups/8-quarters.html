@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup 8 · Quarters</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="round2.css">
+<style>
+  /* Idea: the whole screen is the board (12×8). Each player's panel sits
+     inside the ring right next to their own arena squares, so "whose arena
+     is that, and what do they hold" is one glance. The turn controls take the
+     small courtyard in the middle. */
+  .app { height: 100vh; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 8px; padding: 8px 12px 12px; }
+  .top { display: flex; align-items: center; gap: 18px; }
+  .q { height: 100%; border-radius: 14px; padding: 9px 11px; display: flex; flex-direction: column; gap: 6px; overflow: hidden;
+       background: color-mix(in srgb, var(--pc) 9%, #fffdf8); border: 1.5px solid color-mix(in srgb, var(--pc) 45%, white); }
+  .q .head { display: flex; align-items: center; gap: 8px; }
+  .q .best { margin-left: auto; font-weight: 750; font-size: 17px; display: inline-flex; gap: 3px; align-items: center; }
+  .q .progs { display: flex; flex-direction: column; gap: 3px; font-size: 12px; }
+  .q .progs > div { display: flex; gap: 6px; align-items: center; min-width: 0; }
+  .q .progs .t { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .q .progs .done { opacity: .5; }
+  .q.me { border-width: 2.5px; }
+  .q.me .progs > div { flex-wrap: wrap; }
+  .q.wide { flex-direction: row; gap: 16px; }
+  .q.wide > div { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+  .court { height: 100%; border-radius: 14px; background: #fff; border: 1px solid var(--line); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; overflow: hidden; }
+  .court .markets { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .court .market { padding: 5px; }
+  .court .market .label { display: none; }
+  .logpop { position: fixed; top: 54px; right: 12px; width: 340px; max-height: 60vh; overflow: auto; padding: 10px; z-index: 30; display: none; box-shadow: 0 14px 34px rgba(60,40,10,.18); }
+  .logpop.open { display: block; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><span class="brand">Colosseum</span><span id="trk"></span><span class="spacer"></span>
+    <button class="btn" id="open">Programs for sale <kbd>P</kbd></button><button class="btn" id="logbtn">Log <kbd>L</kbd></button><button class="btn small">New game</button></div>
+  <div class="rfit" id="board"></div>
+</div>
+<div class="panel logpop" id="logpop"></div>
+<script src="../static/icons.js"></script>
+<script src="shared.js"></script>
+<script src="round2.js"></script>
+<script>
+  document.getElementById('trk').innerHTML = trackerHtml({ inline: true });
+  document.getElementById('logpop').innerHTML = logHtml();
+  const progs = (p, i) => `<div class="progs">${p.programs.map((pr) => { const ev = event(pr.id); return `<div class="${pr.produced ? 'done' : ''}">${arenaIcon(ev)}<span class="t">${pr.produced ? CHECK + ' ' : ''}${ev.name}</span>${pr.produced ? bonusBadge() : i === 0 ? `<span class="spacer"></span>${falloff(ev)}<button class="btn small" data-produce>Produce</button>${needRow(ev, p.assets, { size: 'xs' })}` : ladder(ev, true)}</div>`; }).join('')}</div>`;
+  const head = (p, i) => `<div class="head"><span class="dot"></span><b>${i === 0 ? 'You · P1' : pName(i)}</b><span class="muted">${i === 0 ? '' : p.seat}</span>${starTiles(i, 'xs')}<span class="best">${icon('spectators')}${p.best}</span></div>`;
+  const quarter = (i, cls = '') => () => { const p = STATE.players[i]; return cls.includes('wide')
+    ? `<div class="q ${cls}" style="--pc:${pColor(i)}"><div style="width:250px">${head(p, i)}${statsLine(p)}${playerToks(p, 'sm')}</div><div style="flex:1">${progs(p, i)}</div></div>`
+    : `<div class="q ${cls}" style="--pc:${pColor(i)}">${head(p, i)}${statsLine(p)}${playerToks(p, 'sm')}${progs(p, i)}</div>`; };
+  // Arenas on this 12×8 ring: P1 top (3–5), P2 right (14–15), P3 bottom (23–25), P4 left (32–33).
+  mountRing(document.getElementById('board'), 12, 8, [
+    { row: '2/4', col: '2/9', html: quarter(0, 'me wide') },
+    { row: '2/6', col: '9/12', html: quarter(1) },
+    { row: '6/8', col: '4/12', html: quarter(2, 'wide') },
+    { row: '4/8', col: '2/4', html: quarter(3) },
+    { row: '4/6', col: '4/9', html: () => `<div class="court"><div class="row between"><b><span class="dot" style="--pc:var(--p0)"></span> Your turn</b>${diceButtons()}</div>
+      <span class="hint">${moveHint()}</span><div class="row"><span class="hint">Markets</span><span class="spacer"></span><span class="hint">${STATE.bag} in bag · ${STATE.supply.medals} medals · ${STATE.supply.tickets} tickets</span></div>${marketsHtml({ size: 'sm' })}</div>` },
+  ]);
+  mountProgramModal(['open']);
+  const lp = document.getElementById('logpop');
+  document.getElementById('logbtn').onclick = () => lp.classList.toggle('open');
+  document.addEventListener('keydown', (e) => { if (e.key === 'l' || e.key === 'L') lp.classList.toggle('open'); });
+</script>
+</body>
+</html>

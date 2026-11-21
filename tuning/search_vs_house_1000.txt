@@ -1,0 +1,29 @@
+  500 / 1000 games
+  1000 / 1000 games
+1000 games (0 failed) on 16 threads in 1585.3s, seed 77, sizes [4, 5]
+
+bot          seats   win % vs fair   place   score  win@4p  win@5p    ms/move    ms/game   max move
+search        1128   26.2%   1.18x   0.538    76.8   29.0%   24.0%   333.6894   22175.85    1521.5ms
+house         3397   20.8%   0.94x   0.487    74.9   23.6%   18.7%     0.1015       7.04      23.8ms
+(win % is per seat; vs fair = wins / chance-level wins, 1.00x = average)
+(place: 1.0 = always first, 0.0 = always last; chance level is 0.5)
+
+Wins by lineup (share of games won by each bot type; '-' = not seated):
+size   lineup            games      search       house       house       house
+4p     4H+4H+4H            155           -      100.0%        0.0%        0.0%
+4p     1S+3H+3H+3H         186       25.8%       74.2%        0.0%        0.0%
+4p     2S+2H+2H+2H         107       65.4%       34.6%        0.0%        0.0%
+4p     3S+1H+1H+1H          26       80.8%       19.2%        0.0%        0.0%
+4p     4S                    1      100.0%           -           -           -
+5p     5H+5H+5H            118           -      100.0%        0.0%        0.0%
+5p     1S+4H+4H+4H         223       24.2%       75.8%        0.0%        0.0%
+5p     2S+3H+3H+3H         139       46.8%       53.2%        0.0%        0.0%
+5p     3S+2H+2H+2H          35       77.1%       22.9%        0.0%        0.0%
+5p     4S+1H+1H+1H          10       90.0%       10.0%        0.0%        0.0%
+
+Game duration by table size (wall clock, one thread):
+size    games   mean ms    p50 ms    p95 ms    max ms   actions   games/s
+all      1000  25039.11  21382.35  65939.11 121582.51       311       0.0
+4p        475  18048.42  16096.88  51671.68  85863.24       269       0.1
+5p        525  31364.03  26531.27  77027.85 121582.51       348       0.0
+Throughput: 0.6 games/s across all threads

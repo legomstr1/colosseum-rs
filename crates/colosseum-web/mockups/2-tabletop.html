@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup 2 · Tabletop</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  /* Idea: lay the screen out like the physical table. Opponents sit on the
+     left, top and right edges of the board; you sit at the bottom with your
+     hand, and the turn controls sit beside your hand. Warm stone palette. */
+  :root { --bg: #fffdf8; --soft: #f5f0e6; --line: #e7dfcf; --line-strong: #d5cab4; --sq: #fffdf8; }
+  body { background: #efe8da; }
+  .table {
+    height: 100vh; display: grid; gap: 10px; padding: 10px;
+    grid-template-columns: 230px minmax(0, 1fr) 320px;
+    grid-template-rows: auto minmax(0, 1fr) 200px;
+    grid-template-areas: "bar top bar2" "left board right" "me me act";
+  }
+  .seat { background: var(--bg); border: 1px solid var(--line); border-top: 4px solid var(--pc); border-radius: var(--r-lg); padding: 10px; display: flex; flex-direction: column; gap: 7px; min-height: 0; overflow: hidden; }
+  .seat .name { font-weight: 650; display: flex; align-items: center; gap: 6px; }
+  .seat .score { margin-left: auto; font-weight: 700; display: inline-flex; gap: 4px; align-items: center; }
+  .seat .plist { display: flex; flex-direction: column; gap: 3px; font-size: 11.5px; }
+  .seat .plist div { display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; }
+  .seat .plist .done { opacity: .5; }
+  .seat.horiz { flex-direction: row; align-items: center; gap: 16px; padding: 8px 14px; }
+  .seat.horiz .plist { flex-direction: row; gap: 12px; }
+  .bar { grid-area: bar; display: flex; flex-direction: column; justify-content: center; gap: 4px; }
+  .bar .brand { font-weight: 700; font-size: 18px; letter-spacing: .3px; }
+  .bar2 { grid-area: bar2; display: flex; flex-direction: column; justify-content: center; align-items: flex-end; gap: 6px; }
+  .top-seat { grid-area: top; }
+  .left { grid-area: left; } .right { grid-area: right; }
+  .board-fit { grid-area: board; }
+  .board-center { background: #f7f1e4; }
+  .me { grid-area: me; display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 14px; }
+  .me .hand { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; min-height: 0; }
+  .me .card { border: 1px solid var(--line); border-radius: var(--r); padding: 8px 10px; background: #fff; display: flex; flex-direction: column; gap: 6px; font-size: 12.5px; }
+  .me .card.done { opacity: .55; }
+  .me .card .t { font-weight: 650; }
+  .act { grid-area: act; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-lg); padding: 10px; overflow: auto; }
+  .act .move-row .who { min-width: 0; }
+  .act .hint { display: none; }
+  .act .moves { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 10px; }
+  .act .act-sec { padding: 7px 0; }
+  .board-center .markets { grid-template-columns: repeat(auto-fill, minmax(88px, 1fr)); }
+  .seat.horiz .toks { flex-wrap: nowrap; }
+  .seat.horiz .plist { flex-wrap: wrap; }
+  .board-center .market .mrow { --tok: 22px; }
+
+  .modal { position: fixed; inset: 0; background: rgba(40, 30, 10, .35); backdrop-filter: blur(2px); display: none; place-items: center; z-index: 20; padding: 24px; }
+  .modal.open { display: grid; }
+  .modal .sheet { background: var(--bg); border-radius: 20px; width: min(1100px, 100%); max-height: 100%; overflow: auto; padding: 18px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 30px 80px rgba(0,0,0,.25); }
+  .modal .prog-grid { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+</style>
+</head>
+<body>
+<div class="table">
+  <div class="bar"><span class="brand">Colosseum</span><span class="row"><span class="pill strong">Round 3 / 5</span><span class="pill">Producing</span></span></div>
+  <div class="bar2"><button class="btn" id="open">Programs for sale <kbd>P</kbd></button><span class="row"><button class="btn small ghost">Log <kbd>L</kbd></button><button class="btn small">New game</button></span></div>
+  <div class="seat horiz top-seat" id="s2" style="--pc:var(--p2)"></div>
+  <div class="seat left" id="s1" style="--pc:var(--p1)"></div>
+  <div class="seat right" id="s3" style="--pc:var(--p3)"></div>
+  <div class="board-fit" id="board"></div>
+  <div class="seat me" id="me" style="--pc:var(--p0)"></div>
+  <div class="act" id="act"></div>
+</div>
+<div class="modal" id="modal"><div class="sheet"><div data-programs></div></div></div>
+
+<script src="../static/icons.js"></script>
+<script src="shared.js"></script>
+<script>
+  const head = (i) => { const p = STATE.players[i]; return `<div class="row" style="flex-wrap:nowrap"><span class="name"><span class="dot"></span>${pName(i)} <span class="muted" style="font-weight:400">${p.seat}</span></span><span class="score">${icon('spectators')} ${p.best}</span></div>`; };
+  const plist = (p) => `<div class="plist">${p.programs.map((pr) => { const ev = event(pr.id); return `<div class="${pr.produced ? 'done' : ''}">${arenaIcon(ev)} ${pr.produced ? CHECK : ''}${ev.name}</div>`; }).join('')}</div>`;
+  const stars = (i) => starsOf(i).map((a) => `<span class="star">${tok(a, { size: 'xs' })}</span>`).join('');
+  for (const i of [1, 2, 3]) {
+    const p = STATE.players[i];
+    const el = document.getElementById(`s${i}`);
+    el.innerHTML = i === 2
+      ? `<div style="min-width:170px">${head(i)}<div class="stats-line">${playerStats(p)}</div></div>${stacks(p.assets, { size: 'sm' })}<span class="row">${stars(i)}</span><span class="spacer"></span>${plist(p)}`
+      : `${head(i)}<div class="stats-line">${playerStats(p)}</div><div class="row">${stars(i)}</div>${toks(p.assets, { size: 'sm' })}${plist(p)}`;
+  }
+  const me = STATE.players[0];
+  document.getElementById('me').innerHTML = `
+    <div style="display:flex;flex-direction:column;gap:7px;width:260px">${head(0)}<div class="stats-line">${playerStats(me)}</div><div class="row"><span class="hint">Stars</span>${stars(0)}</div>${toks(me.assets)}</div>
+    <div class="hand">${me.programs.map((pr) => { const ev = event(pr.id); return `<div class="card ${pr.produced ? 'done' : ''}">
+      <div class="row" style="flex-wrap:nowrap">${arenaIcon(ev)}<span class="t">${pr.produced ? CHECK + ' ' : ''}${ev.name}</span><span class="spacer"></span>${pr.produced ? bonusBadge() : ''}</div>
+      ${pr.produced ? '<span class="hint">Produced: +5 to each later event</span>' : `${ladder(ev)}${needRow(ev, me.assets)}<span class="hint">you hold ${matched(ev, me.assets)} of ${ev.requirements.length}</span>`}</div>`; }).join('')}</div>`;
+  document.getElementById('board').innerHTML = board(`<div class="row between"><b>Markets</b><span class="row"><span class="hint">Rolled</span>${diceHtml()}</span></div>${marketsHtml()}${supplyHtml()}`);
+  document.getElementById('act').innerHTML = actionsHtml({ noProduce: true }) + `<div class="act-sec"><button class="btn primary">Produce… <span class="muted" style="color:#ccc">after both dice</span></button></div>`;
+  const modal = document.getElementById('modal');
+  const toggle = (v) => modal.classList.toggle('open', v);
+  document.getElementById('open').onclick = () => toggle(true);
+  modal.onclick = (e) => { if (e.target === modal) toggle(false); };
+  wirePrograms(modal, toggle);
+  mockTag(2, 'Tabletop');
+</script>
+</body>
+</html>

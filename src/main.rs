@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use std::collections::HashMap;
 
-mod game_state;
+mod game;
 mod types;
 
 #[derive(Debug, Deserialize)]

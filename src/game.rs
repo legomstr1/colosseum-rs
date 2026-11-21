@@ -1,7 +1,7 @@
 use crate::types::*;
 
 #[derive(Clone, Debug)]
-pub struct GameState {
+pub struct Game {
     pub players: Vec<PlayerState>,
     pub current_round: u8,
     pub phase: Phase,
@@ -13,7 +13,7 @@ pub struct GameState {
     pub board: Board,
 }
 
-impl GameState {
+impl Game {
     pub fn new(num_players: usize) -> Self {
         let colosseum_layout = match num_players {
             3 => vec![vec![8, 9], vec![21, 22], vec![32, 33]],

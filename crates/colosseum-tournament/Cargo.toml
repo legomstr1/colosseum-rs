@@ -1,0 +1,25 @@
+[package]
+name = "colosseum-tournament"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Round-robin bot tournament and timing benchmark for Colosseum"
+
+[[bin]]
+name = "tournament"
+path = "src/main.rs"
+
+[dependencies]
+colosseum-engine.workspace = true
+clap.workspace = true
+serde_json.workspace = true
+colosseum-bot-planner = { path = "../bots/planner" }
+colosseum-bot-auctioneer = { path = "../bots/auctioneer" }
+colosseum-bot-trader = { path = "../bots/trader" }
+colosseum-bot-rollout = { path = "../bots/rollout" }
+colosseum-bot-showman = { path = "../bots/showman" }
+colosseum-bot-oracle = { path = "../bots/oracle" }
+colosseum-bot-chameleon = { path = "../bots/chameleon" }
+colosseum-bot-maestro = { path = "../bots/maestro" }
+colosseum-bot-house = { path = "../bots/house" }
+colosseum-bot-search = { path = "../bots/search" }

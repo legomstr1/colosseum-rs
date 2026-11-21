@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup 10 · Phase Stage</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="round2.css">
+<style>
+  /* Idea: the middle of a wide 13×7 ring is a stage whose content changes
+     with the phase, and the ring itself takes clicks when the phase is about
+     the board (expanding your arena, moving nobles). All four players sit
+     side by side underneath, equal. Click a phase in the tracker to preview
+     each stage. */
+  .app { height: 100vh; display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: 8px; padding: 8px 12px 12px; }
+  .top { display: flex; align-items: center; gap: 18px; }
+  .top .tracker .phases { min-width: 460px; }
+  .stage { height: 100%; background: #fff; border: 2px solid var(--p0); border-radius: 18px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; overflow: auto; }
+  .stage h3 { margin: 0; font-size: 16px; display: flex; align-items: center; gap: 8px; }
+  .opts { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; }
+  .opt { border: 1px solid var(--line-strong); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 4px; background: var(--bg); cursor: pointer; text-align: left; }
+  .opt:hover { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+  .opt b { font-size: 14px; display: flex; gap: 6px; align-items: center; }
+  .opt .price { font-weight: 750; }
+  .bigm { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 10px; }
+  .bigm .market { padding: 12px; cursor: pointer; --tok: 30px; }
+  .bigm .market:hover { border-color: var(--ink); }
+  .bigm .market.live { border: 2px solid var(--ink); }
+  .stepper { display: inline-flex; align-items: center; border: 1px solid var(--line-strong); border-radius: var(--r-sm); overflow: hidden; background: #fff; }
+  .stepper button { border: 0; background: none; width: 32px; height: 32px; cursor: pointer; font-size: 16px; }
+  .stepper span { min-width: 40px; text-align: center; font-weight: 700; }
+  .trade { display: grid; grid-template-columns: 1fr auto 1fr; gap: 14px; align-items: start; }
+  .trade .side { background: var(--soft); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 8px; }
+  .trade .tok.picked { outline: 2.5px solid var(--ink); outline-offset: 1px; }
+  .swap { font-size: 22px; color: var(--muted); padding-top: 40px; }
+  .lower { flex: 1; min-height: 0; display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+  .lower > div { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  .lower .lg .log { overflow: auto; }
+  .stage { overflow: hidden; }
+  .players { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+  .pcard2 { padding: 9px 11px; display: flex; flex-direction: column; gap: 6px; border-top: 4px solid var(--pc); }
+  .pcard2.turn { box-shadow: 0 0 0 2px var(--pc); }
+  .pcard2 .head { display: flex; align-items: center; gap: 8px; }
+  .pcard2 .best { margin-left: auto; font-weight: 750; font-size: 17px; display: inline-flex; gap: 3px; align-items: center; }
+  .pcard2 .mini { display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; }
+  .pcard2 .mini div { display: flex; gap: 5px; align-items: center; white-space: nowrap; overflow: hidden; }
+  .pcard2 .mini .done { opacity: .5; }
+  .mark { font-size: 10.5px; font-weight: 700; z-index: 1; background: var(--ink); color: #fff; padding: 2px 6px; border-radius: 999px; }
+  .results { display: flex; flex-direction: column; gap: 6px; }
+  .results .r { display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: 10px; background: var(--soft); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><span class="brand">Colosseum</span><span id="trk"></span><span class="hint">click a phase to preview its stage</span><span class="spacer"></span>
+    <button class="btn" id="open">Programs for sale <kbd>P</kbd></button><button class="btn small">Log <kbd>L</kbd></button></div>
+  <div class="rfit" id="board"></div>
+  <div class="players" id="players"></div>
+</div>
+<script src="../static/icons.js"></script>
+<script src="shared.js"></script>
+<script src="round2.js"></script>
+<script>
+  let PREVIEW = 'Producing';
+  const me = STATE.players[0];
+  const head = (b) => `<h3><span class="dot" style="--pc:var(--p0)"></span>${b}</h3>`;
+  const lower = () => `<div class="lower"><div><b>Markets</b>${marketsHtml({ size: 'sm' })}${supplyHtml()}</div><div class="lg"><b>Log</b>${logHtml()}</div></div>`;
+  const STAGES = {
+    Investing: () => `${head('Your turn · choose one investment')}
+      <div class="opts">
+        <button class="opt" id="buyopt"><b>Buy a program</b><span class="hint">${STATE.forSale.length} for sale, 13–40 coins</span><span class="hint">Opens the list <kbd>P</kbd></span></button>
+        <button class="opt"><b>Expand your arena</b><span class="price">${icon('coins')} 10</span><span class="hint">Or click the marked square on the board</span></button>
+        <button class="opt"><b>${icon('ticket')} Season ticket</b><span class="price">${icon('coins')} 10</span><span class="hint">+5 spectators per event</span></button>
+        <button class="opt"><b>${icon('loge')} Emperor's loge</b><span class="price">${icon('coins')} 5</span><span class="hint">You already have one</span></button>
+        <button class="opt"><b>Skip</b><span class="hint">Keep your coins</span></button>
+      </div><span class="hint">You have ${icon('coins')} ${me.coins}.</span>${lower()}`,
+    Acquiring: () => `${head('Your turn · open an auction')}
+      <div class="bigm">${STATE.markets.map((m, i) => `<div class="market ${i === 1 ? 'live' : ''} ${m.length ? '' : 'empty'}"><span class="label">Market ${i + 1}</span>${m.length ? `<span class="mrow">${m.map((a) => tok(a)).join('')}</span>` : '<span class="muted">empty</span>'}</div>`).join('')}</div>
+      <div class="row"><b>Market 2</b><span class="hint">opening bid</span><span class="stepper"><button>−</button><span>8</span><button>+</button></span><button class="btn primary">Start auction</button><span class="hint">Minimum 8 · ${STATE.bag} tokens left in the bag</span></div>`,
+    Trading: () => `${head('Your turn · propose a trade')}
+      <div class="row"><span class="hint">With</span>${[1, 2, 3].map((i) => `<button class="chip ${i === 1 ? 'on' : ''}">${pName(i)}</button>`).join('')}</div>
+      <div class="trade"><div class="side"><b>You give</b><span class="hint">Click tokens to pick them</span>${toks(me.assets).replace('class="tok ', 'class="tok picked ')}<div class="row"><span class="stepper"><button>−</button><span>${icon('coins')} 0</span><button>+</button></span></div></div>
+        <div class="swap">⇄</div>
+        <div class="side"><b>You get from P2</b><span class="hint">Click tokens to pick them</span>${toks(STATE.players[1].assets)}<div class="row"><span class="stepper"><button>−</button><span>${icon('coins')} 3</span><button>+</button></span></div></div></div>
+      <div class="row"><button class="btn primary">Send offer</button><button class="btn">End trading</button></div>${lower()}`,
+    Producing: () => `${head('Your turn · move a noble with each die, then produce')}
+      <div class="row">${diceButtons()}<span class="hint">${moveHint()}</span></div>${moveChips()}
+      <div class="row">${me.programs.filter((p) => !p.produced).map((pr) => `<button class="btn" data-produce>Produce <b>${event(pr.id).name}</b> ${icon('spectators')} ${pr.id === 10 ? 12 : 9}</button>`).join('')}<button class="btn small">${icon('medal')} Medal move</button></div>
+      ${lower()}`,
+    Closing: () => `${head('Closing ceremonies')}
+      <div class="results">${[[2, 'Bacchus and the Nymphs', 30, 'podium'], [0, 'Cavalry of Spartacus', 17, ''], [1, 'Anthem to Cupidon', 12, ''], [3, 'nothing produced', 0, 'last place']].map(([i, n, s, tag]) => `<div class="r"><span class="dot" style="--pc:${pColor(i)}"></span><b>${pName(i)}</b>${n}<span class="spacer"></span>${tag === 'podium' ? `${icon('podium')} podium` : tag}<b>${icon('spectators')} ${s}</b></div>`).join('')}</div>
+      <b>Discard one token you used</b><span class="toks">${['Gladiator', 'Horse', 'Joker'].map((a) => tok(a)).join('')}</span>${lower()}`,
+  };
+  window.boardMoves = false;
+  window.boardExtra = () => (PREVIEW === 'Investing' ? { 6: '<span class="mark">+ arena · 10</span>' } : {});
+  const setPhase = (ph) => {
+    PREVIEW = ph;
+    window.boardMoves = ph === 'Producing';
+    document.getElementById('trk').innerHTML = trackerHtml({ inline: true, clickable: true, phase: ph });
+    redraw();
+    document.getElementById('buyopt')?.addEventListener('click', () => toggle(true));
+  };
+  mountRing(document.getElementById('board'), 13, 7, () => `<div class="stage">${STAGES[PREVIEW]()}</div>`);
+  document.getElementById('trk').addEventListener('click', (e) => { const b = e.target.closest('[data-phase]'); if (b) setPhase(b.dataset.phase); });
+  document.getElementById('players').innerHTML = STATE.players.map((p, i) => `<div class="panel pcard2 ${i === 0 ? 'turn' : ''}" style="--pc:${pColor(i)}">
+    <div class="head"><span class="dot"></span><b>${i === 0 ? 'You · P1' : pName(i)}</b><span class="muted">${i === 0 ? '' : p.seat}</span>${starTiles(i, 'xs')}<span class="best">${icon('spectators')}${p.best}</span></div>
+    ${statsLine(p)}${playerToks(p, 'xs')}
+    <div class="mini">${p.programs.map((pr) => { const ev = event(pr.id); return `<div class="${pr.produced ? 'done' : ''}">${arenaIcon(ev)}${pr.produced ? CHECK : ''}${ev.name}</div>`; }).join('')}</div></div>`).join('');
+  const toggle = mountProgramModal(['open']);
+  setPhase('Producing');
+</script>
+</body>
+</html>

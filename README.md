@@ -13,11 +13,13 @@ The primary goal of this project is to enable AI development and experimentation
 🚧 **Work in Progress** 🚧
 
 Current implementation status:
-- 🚧 Core data structures and game state representation
-- 🚧 Game rules and phase management (in progress)
-- 📋 AI agent API (planned)
-- 📋 CLI/TUI for human play (planned)
-- 📋 Game replay system (planned)
+- ✅ Data-driven game engine: all five phases, with every rule constant in YAML
+- ✅ AI agent API, plus random and greedy bots
+- ✅ CLI for human play and bot simulations
+- ✅ Deterministic replay from a seed and action history, plus serializable game state
+- 📋 MCP / API layer (planned)
+- ✅ Browser GUI (`colosseum-web`), hotseat play against bots
+- 📋 Online play with others (planned)
 
 ## Features
 
@@ -29,42 +31,49 @@ Current implementation status:
 
 ### Playing the Game
 
-> **Note**: CLI/TUI interface is currently under development. Check back soon!
-
 ```bash
-# Clone the repository
 git clone https://github.com/legomstr1/colosseum-rs.git
 cd colosseum-rs
 
-# Build the project
-cargo build --release
+# You against two greedy bots (seats: human, greedy, random; 3-5 players)
+cargo run --release -p colosseum-cli -- play --players human,greedy,greedy
 
-# Run a game (coming soon)
-cargo run --release
+# Bot-only simulation
+cargo run --release -p colosseum-cli -- sim --players greedy,random,random --games 500
+
+# Browser GUI, then open http://127.0.0.1:8080
+cargo run --release -p colosseum-web
 ```
+
+Pass `--seed N` to replay a game exactly. Pass `--data <dir>` to load a modified `game_config.yml`/`events.yml`.
 
 ### Building an AI Agent
 
-The game provides all legal actions at each decision point through a well-defined API. Here's the basic structure:
+The engine is a reducer over plain data. At every decision point it gives you the legal actions, so an agent only has to choose one:
 
 ```rust
-// Example structure (API subject to change during development)
-use colosseum_rs::{Game, Action, Player};
+use colosseum_engine::agent::{play_out, Agent, GreedyAgent};
+use colosseum_engine::{Action, Game, GameConfig};
+use std::sync::Arc;
 
-struct MyAI {
-    // Your AI state
-}
+struct MyAI;
 
-impl Player for MyAI {
-    fn choose_action(&mut self, game: &Game, legal_actions: &[Action]) -> Action {
-        // Your AI logic here
-        // All legal moves are provided - no rule checking needed!
-        legal_actions[0].clone()
+impl Agent for MyAI {
+    fn name(&self) -> String { "mine".into() }
+    fn choose_action(&mut self, game: &Game, legal: &[Action]) -> Action {
+        // `game` is the full public state; `legal` is every legal move.
+        legal[0].clone()
     }
 }
+
+let mut game = Game::new(Arc::new(GameConfig::embedded()), 3, 42).unwrap();
+let mut agents: Vec<Box<dyn Agent>> =
+    vec![Box::new(MyAI), Box::new(GreedyAgent::new(1)), Box::new(GreedyAgent::new(2))];
+play_out(&mut game, &mut agents);
+println!("{:?}", game.ranking());
 ```
 
-For detailed information on implementing AI agents, see [docs/AI_GUIDE.md](docs/AI_GUIDE.md) (coming soon).
+Trade offers are open-ended, so `legal_actions()` doesn't list them. Build a `ProposeTrade` or `CounterTrade` yourself and validate it with `game.check(&action)`.
 
 ## Game Overview
 
@@ -114,15 +123,15 @@ RUST_LOG=debug cargo run
 
 ```
 colosseum-rs/
-├── src/
-│   ├── data/           # Relevant game data
-│   ├── game_state.rs   # Managing the game state
-│   ├── types.rs        # All the structs
-│   ├── main.rs         #
-│   └── lib.rs          # Library entry point
-├── docs/               # Documentation
-├── examples/           # Example AI implementations
-└── tests/              # Integration tests
+├── data/
+│   ├── game_config.yml   # Every rule constant: costs, supplies, bonuses, board, dice
+│   └── events.yml        # The 30 event program cards
+└── crates/
+    ├── colosseum-engine/ # Library: state, actions, rules reducer, agents
+    │   ├── src/game/     # One module per phase (legal actions + effects)
+    │   └── tests/        # Full bot games, invariants, replay, scoring
+    ├── colosseum-cli/    # `colosseum` binary: play and sim
+    └── colosseum-web/    # `colosseum-web` binary: JSON API + browser page in static/
 ```
 
 ## Contributing
@@ -157,6 +166,8 @@ Please read [CONTRIBUTING.md](docs/CONTRIBUTING.md) for guidelines on how to get
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ## Acknowledgments
+
+- Token and noble icons in the browser GUI are by Lorc, Delapouite and Cathelineau from [game-icons.net](https://game-icons.net), licensed under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/)
 
 - **Wolfgang Kramer** and **Markus Lübke** - Original game designers
 - **Days of Wonder** - Original game publisher

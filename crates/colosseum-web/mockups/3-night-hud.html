@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup 3 · Night HUD</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  /* Idea: a game-style HUD. The board is the stage at the centre of a dark
+     screen; compact panels float around it: scoreboard top-left, round and
+     phase top-right, the turn dock along the bottom. Programs rise as a
+     bottom sheet. */
+  :root {
+    --bg: #1b1e25; --soft: #232731; --line: #333845; --line-strong: #454b5a; --ink: #eef0f4; --muted: #9aa1b0;
+    --sq: #20242c; --good-bg: #1f3b2a; --good: #7fd69c;
+  }
+  body { background: radial-gradient(ellipse at 50% 40%, #262b36 0%, #12141a 75%); color: var(--ink); }
+  .btn { background: var(--soft); }
+  .btn:hover { background: #2c313d; }
+  .btn.primary { background: #e9c46a; border-color: #e9c46a; color: #1b1e25; }
+  .die { background: var(--soft); color: var(--ink); border-color: #7b8294; }
+  .die.on { background: #e9c46a; color: #1b1e25; border-color: #e9c46a; }
+  .stat, .market { background: #1f232b; }
+  .sq .num { color: #5d6474; }
+  .sq.target { border-color: #e9c46a; }
+  .sq.target.hot { outline-color: #e9c46a; }
+  .ladder .ic, .stats-line .ic, .stat .ic { color: #9aa1b0; }
+  .ladder .lstep { color: #f08a7e; }
+  .log .e { color: #c3c8d3; } .log .e.new { background: #3b3420; }
+  kbd { background: var(--soft); color: var(--ink); }
+  .pcard { background: var(--soft); }
+  .pcard .cost .ic { color: #e9c46a; }
+
+  .stage { position: fixed; inset: 0; display: grid; grid-template-columns: 300px minmax(0, 1fr) 300px; grid-template-rows: minmax(0, 1fr) auto; gap: 14px; padding: 14px; }
+  .glass { background: rgba(27, 30, 37, .82); border: 1px solid var(--line); border-radius: var(--r-lg); backdrop-filter: blur(8px); box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+  .score { padding: 10px; display: flex; flex-direction: column; gap: 6px; overflow: auto; }
+  .score h4, .side h4 { margin: 0 0 2px; font-size: 11px; letter-spacing: .8px; text-transform: uppercase; color: var(--muted); }
+  .srow { display: grid; grid-template-columns: 4px 1fr auto; gap: 8px; padding: 7px 8px; border-radius: 10px; background: var(--soft); }
+  .srow .bar { background: var(--pc); border-radius: 4px; }
+  .srow.turn { box-shadow: 0 0 0 1.5px var(--pc); }
+  .srow .best { font-size: 18px; font-weight: 750; display: flex; align-items: center; gap: 4px; }
+  .srow .best .ic { color: #9aa1b0; font-size: 14px; }
+  .srow .info { display: flex; flex-direction: column; gap: 5px; min-width: 0; }
+  .srow .more { grid-column: 2 / -1; display: none; flex-direction: column; gap: 4px; }
+  .srow.open .more { display: flex; }
+  .pline { background: #1b1e25; }
+  .board-fit { grid-column: 2; grid-row: 1; }
+  .board-center { background: rgba(255,255,255,.03); }
+  .now { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; }
+  .bigdice { display: flex; gap: 14px; }
+  .bigdice .die { min-width: 74px; height: 74px; font-size: 28px; border-radius: 16px; }
+  .side { display: flex; flex-direction: column; gap: 14px; min-height: 0; }
+  .side .glass { padding: 12px; }
+  .round { display: flex; flex-direction: column; gap: 8px; }
+  .round .big { font-size: 26px; font-weight: 750; }
+  .phases { display: flex; gap: 3px; }
+  .phases span { flex: 1; height: 5px; border-radius: 3px; background: var(--line-strong); }
+  .phases span.done { background: #8b93a4; } .phases span.now { background: #e9c46a; }
+  .side .logbox { flex: 1; min-height: 0; overflow: auto; }
+  .dock { grid-column: 1 / -1; grid-row: 2; padding: 10px 14px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 18px; align-items: center; }
+  .dock .who { display: flex; align-items: center; gap: 10px; font-weight: 650; }
+  .dock .opts { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .dock .nb { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 10px; border: 1px solid var(--line-strong); background: var(--soft); font-size: 12.5px; cursor: pointer; }
+  .dock .nb:hover { border-color: #e9c46a; }
+  .dock .nb .tag { color: var(--muted); font-size: 11.5px; }
+  .dock .nb.mine { border-color: #e9c46a; }
+
+  .sheet { position: fixed; left: 50%; bottom: 0; width: min(1200px, calc(100% - 28px)); max-height: 72vh; transform: translate(-50%, 102%); transition: transform .22s ease; z-index: 20; border-radius: 20px 20px 0 0; padding: 8px 18px 18px; overflow: auto; display: flex; flex-direction: column; gap: 12px; }
+  .sheet.open { transform: translate(-50%, 0); }
+  .grab { width: 44px; height: 5px; border-radius: 3px; background: var(--line-strong); margin: 4px auto 0; }
+  .sheet .prog-grid { grid-template-columns: repeat(auto-fill, minmax(270px, 1fr)); }
+</style>
+</head>
+<body>
+<div class="stage">
+  <div class="glass score" id="score"></div>
+  <div class="board-fit" id="board"></div>
+  <div class="side">
+    <div class="glass round"><div class="row between"><span class="big">Round 3<span class="muted" style="font-size:16px"> / 5</span></span><button class="btn small">Menu</button></div>
+      <div class="phases"><span class="done" title="Investing"></span><span class="done" title="Acquiring"></span><span class="done" title="Trading"></span><span class="now" title="Producing"></span><span title="Closing"></span></div>
+      <span class="hint">Investing · Acquiring · Trading · <b style="color:var(--ink)">Producing</b> · Closing</span>
+      <button class="btn" id="open" style="justify-content:space-between">Programs for sale (16) <kbd>P</kbd></button></div>
+    <div class="glass logbox"><h4>Log</h4><div id="log"></div></div>
+  </div>
+  <div class="glass dock" id="dock"></div>
+</div>
+<div class="glass sheet" id="sheet"><div class="grab"></div><div data-programs></div></div>
+
+<script src="../static/icons.js"></script>
+<script src="shared.js"></script>
+<script>
+  document.getElementById('score').innerHTML = '<h4>Players · click to expand</h4>' + STATE.players.map((p, i) => `
+    <div class="srow ${i === STATE.current ? 'turn open' : ''}" style="--pc:${pColor(i)}" data-row>
+      <span class="bar"></span>
+      <span class="info"><span><b>${pName(i)}</b> <span class="muted">${p.seat}</span></span><span class="stats-line">${playerStats(p)}</span>${stacks(p.assets, { size: 'xs' })}</span>
+      <span class="best">${icon('spectators')}${p.best}</span>
+      <div class="more">${p.programs.map((pr) => programLine(pr, p.assets, { short: true, tokSize: 'xs' })).join('')}</div>
+    </div>`).join('');
+  document.getElementById('score').addEventListener('click', (e) => e.target.closest('[data-row]')?.classList.toggle('open'));
+  document.getElementById('board').innerHTML = board(`${marketsHtml()}${supplyHtml()}<div class="now"><span class="hint">P1 rolled</span><div class="bigdice">${STATE.dice.map((d, i) => `<span class="die ${i === 1 ? 'on' : ''}">${faceLabel(d)}</span>`).join('')}</div><span class="hint">Pick a noble in the dock below, or click a dashed square</span></div>`);
+  document.getElementById('log').innerHTML = logHtml();
+  document.getElementById('dock').innerHTML = `
+    <div class="who"><span class="dot" style="--pc:var(--p0);width:14px;height:14px"></span><div>Your turn<div class="hint" style="font-weight:400">Move a noble with the die</div></div>${diceHtml()}</div>
+    <div class="opts">${moveRows().map(({ nb, to, tag }) => `<span class="nb ${tag.includes('your') ? 'mine' : ''}"><span style="color:${NOBLES[nb.kind].fg}">${icon(nb.kind)}</span>${nb.position} → <b>${to}</b><span class="tag">${tag.replace(/<[^>]+>/g, '')}</span></span>`).join('')}</div>
+    <div class="row"><button class="btn small">${icon('medal')} Medal move</button><button class="btn primary">Produce… <kbd>Enter</kbd></button></div>`;
+  const sheet = document.getElementById('sheet');
+  const toggle = (v) => sheet.classList.toggle('open', v);
+  document.getElementById('open').onclick = () => toggle(true);
+  wirePrograms(sheet, toggle);
+  mockTag(3, 'Night HUD');
+</script>
+</body>
+</html>

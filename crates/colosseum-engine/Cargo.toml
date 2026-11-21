@@ -1,0 +1,13 @@
+[package]
+name = "colosseum-engine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Rules engine for the Colosseum board game"
+
+[dependencies]
+serde.workspace = true
+serde_yml.workspace = true
+
+[dev-dependencies]
+serde_json.workspace = true

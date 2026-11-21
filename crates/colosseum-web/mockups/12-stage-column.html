@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup 12 · Stage and Column</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="round2.css">
+<link rel="stylesheet" href="round3.css">
+<style>
+  /* The same stage, with the seats stacked in a column on the right. The
+     column grows downward with more players, so the ring keeps its height
+     and turns squarer (11×9 or 12×8) on a laptop screen. */
+  .app { height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) 330px; grid-template-rows: auto minmax(0, 1fr); gap: 14px 18px; padding: 12px 18px 16px; }
+  .bar3 { grid-column: 1 / -1; }
+  .col { display: flex; flex-direction: column; gap: 10px; min-height: 0; overflow: auto; }
+  .col .seat3 { flex: 1 1 0; min-height: 0; border-top-width: 1px; border-left: 5px solid var(--pc); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="bar3" id="bar"></div>
+  <div class="ring-area" id="ring"></div>
+  <div class="col" id="col"></div>
+</div>
+<script src="../static/icons.js"></script>
+<script src="shared.js"></script>
+<script src="round2.js"></script>
+<script src="round3.js"></script>
+<script>
+  const drawBar = () => { document.getElementById('bar').innerHTML = `<span class="brand">Colosseum</span>${trackerHtml({ inline: true, clickable: true, phase: VIEW.phase })}<span class="spacer"></span>${topButtons()}`; };
+  const drawCol = () => { document.getElementById('col').innerHTML = STATE.players.map((_, i) => seat(i, { tok: 'sm' })).join(''); };
+  drawBar(); drawCol();
+  BOARDS.push(drawBar, drawCol);
+  mountRing3(document.getElementById('ring'), stageHtml);
+  mountChrome();
+</script>
+</body>
+</html>

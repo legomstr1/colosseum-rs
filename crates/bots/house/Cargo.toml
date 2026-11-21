@@ -1,0 +1,9 @@
+[package]
+name = "colosseum-bot-house"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Colosseum bot: the house strategy from in-person play"
+
+[dependencies]
+colosseum-engine.workspace = true

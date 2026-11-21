@@ -1,0 +1,9 @@
+[package]
+name = "colosseum-bot-auctioneer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Colosseum bot: Auction valuation specialist"
+
+[dependencies]
+colosseum-engine.workspace = true

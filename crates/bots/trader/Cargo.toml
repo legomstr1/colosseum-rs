@@ -1,0 +1,9 @@
+[package]
+name = "colosseum-bot-trader"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Colosseum bot: Active trade negotiator"
+
+[dependencies]
+colosseum-engine.workspace = true

@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup 9 · Inside the Ring</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="round2.css">
+<style>
+  /* Idea: us versus them, literally. Everything that is yours sits inside the
+     ring: your tokens, your programs (produce from the card) and your dice.
+     Opponents line up outside on the right; the shared things (markets,
+     supply, log) sit outside on the left. */
+  .app { height: 100vh; display: grid; grid-template-columns: 250px minmax(0, 1fr) 270px; grid-template-rows: auto minmax(0, 1fr); gap: 10px; padding: 10px 12px 12px; }
+  .top { grid-column: 1 / -1; display: flex; align-items: center; gap: 18px; }
+  .shared { padding: 10px; display: flex; flex-direction: column; gap: 10px; min-height: 0; }
+  .shared h4, .yard h4 { margin: 0; font-size: 11px; letter-spacing: .6px; text-transform: uppercase; color: var(--muted); }
+  .shared .markets { grid-template-columns: 1fr 1fr; }
+  .shared .log { overflow: auto; flex: 1; min-height: 0; }
+  .them { display: flex; flex-direction: column; gap: 8px; min-height: 0; }
+  .opp { flex: 1; padding: 9px 11px; display: flex; flex-direction: column; gap: 6px; border-left: 5px solid var(--pc); overflow: hidden; }
+  .opp .head { display: flex; align-items: center; gap: 8px; }
+  .opp .best { margin-left: auto; font-weight: 750; font-size: 17px; display: inline-flex; gap: 3px; align-items: center; }
+  .opp .mini { display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; }
+  .opp .mini div { display: flex; gap: 5px; align-items: center; white-space: nowrap; overflow: hidden; }
+  .opp .mini .done { opacity: .5; }
+  .yard { height: 100%; display: grid; grid-template-columns: 230px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 10px; padding: 12px; border-radius: 18px;
+          background: color-mix(in srgb, var(--p0) 7%, #fffdf8); border: 2px solid color-mix(in srgb, var(--p0) 45%, white); }
+  .yard .turn { grid-column: 1 / -1; display: flex; flex-direction: column; gap: 7px; background: #fff; border-radius: 12px; padding: 10px 12px; border: 1px solid var(--line); }
+  .yard .mine { display: flex; flex-direction: column; gap: 7px; min-height: 0; }
+  .cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; min-height: 0; }
+  .pc { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px; display: flex; flex-direction: column; gap: 7px; font-size: 12.5px; }
+  .pc.done { opacity: .55; }
+  .pc .t { font-weight: 650; }
+  .pc .go { margin-top: auto; }
+  .pc .falloff { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><span class="brand">Colosseum</span><span id="trk"></span><span class="spacer"></span><button class="btn" id="open">Programs for sale <kbd>P</kbd></button><button class="btn small">New game</button></div>
+  <div class="panel shared"></div>
+  <div class="rfit" id="board"></div>
+  <div class="them" id="them"></div>
+</div>
+<script src="../static/icons.js"></script>
+<script src="shared.js"></script>
+<script src="round2.js"></script>
+<script>
+  document.querySelector('.shared').innerHTML = `<h4>Markets</h4>${marketsHtml({ size: 'sm' })}${supplyHtml()}<h4>Log</h4><div class="log">${STATE.log.map((e) => `<div class="e ${e.k} ${e.n ? 'new' : ''}">${e.t}</div>`).join('')}</div>`;
+  document.getElementById('trk').innerHTML = trackerHtml({ inline: true });
+  document.getElementById('them').innerHTML = [1, 2, 3].map((i) => { const p = STATE.players[i]; return `<div class="panel opp" style="--pc:${pColor(i)}">
+    <div class="head"><span class="dot"></span><b>${pName(i)}</b><span class="muted">${p.seat}</span><span class="best">${icon('spectators')}${p.best}</span></div>
+    ${statsLine(p)}<div class="row">${starTiles(i, 'xs')}</div>${playerToks(p, 'xs')}
+    <div class="mini">${p.programs.map((pr) => { const ev = event(pr.id); return `<div class="${pr.produced ? 'done' : ''}">${arenaIcon(ev)}${pr.produced ? CHECK : ''}${ev.name}</div>`; }).join('')}</div></div>`; }).join('');
+  const me = STATE.players[0];
+  mountRing(document.getElementById('board'), 13, 7, () => `<div class="yard">
+    <div class="turn"><div class="row between"><b><span class="dot" style="--pc:var(--p0)"></span> Your turn · use both dice, then produce</b>${diceButtons()}</div><span class="hint">${moveHint()}</span>${moveChips()}</div>
+    <div class="mine"><div class="row"><b>You · P1</b><span class="spacer"></span><b>${icon('spectators')} ${me.best}</b></div>${statsLine(me)}<div class="row"><span class="hint">Stars</span>${starTiles(0)}</div>${playerToks(me, '')}</div>
+    <div class="cards">${me.programs.map((pr) => { const ev = event(pr.id); return `<div class="pc ${pr.produced ? 'done' : ''}">
+      <div class="row" style="flex-wrap:nowrap">${arenaIcon(ev)}<span class="t">${pr.produced ? CHECK + ' ' : ''}${ev.name}</span></div>
+      ${pr.produced ? `${bonusBadge()}<span class="hint">Adds +5 to each later, different event</span>` : `${falloff(ev)}${needRow(ev, me.assets, { size: 'sm' })}<span class="hint">hold ${matched(ev, me.assets)} of ${ev.requirements.length}</span><button class="btn go" data-produce>Produce</button>`}</div>`; }).join('')}
+    </div></div>`);
+  mountProgramModal(['open']);
+</script>
+</body>
+</html>

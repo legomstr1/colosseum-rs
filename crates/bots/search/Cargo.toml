@@ -1,0 +1,13 @@
+[package]
+name = "colosseum-bot-search"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Colosseum bot: Monte Carlo search over determinized playouts"
+
+[dependencies]
+colosseum-engine.workspace = true
+colosseum-bot-house = { path = "../house" }
+colosseum-bot-oracle = { path = "../oracle" }
+colosseum-bot-maestro = { path = "../maestro" }
+colosseum-bot-chameleon = { path = "../chameleon" }

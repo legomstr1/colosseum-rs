@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup 5 · Ledger</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  /* Idea: information density first. The left column is a ledger: one column
+     per player, one row per token type, so star races and trade partners are
+     readable at a glance. The board sits in the middle; the right column is a
+     tabbed panel (Turn / Programs held / Log). Programs for sale open as a
+     searchable command palette. */
+  .app { height: 100vh; display: grid; grid-template-columns: 330px minmax(0, 1fr) 360px; grid-template-rows: auto minmax(0, 1fr); }
+  .top { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; padding: 8px 14px; border-bottom: 1px solid var(--line); }
+  .brand { font-weight: 700; font-size: 16px; margin-right: 6px; }
+  .ledger { border-right: 1px solid var(--line); overflow: auto; padding: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 12.5px; }
+  th, td { padding: 3px 4px; text-align: center; }
+  th { font-weight: 600; font-size: 11.5px; position: sticky; top: 0; background: var(--bg); }
+  th .dot { margin-right: 3px; }
+  th.me { background: color-mix(in srgb, var(--p0) 10%, white); }
+  td.me { background: color-mix(in srgb, var(--p0) 6%, white); }
+  td:first-child { text-align: left; }
+  tr.sep td { border-top: 1px solid var(--line); }
+  .cell { display: inline-flex; min-width: 24px; height: 22px; align-items: center; justify-content: center; border-radius: 6px; font-weight: 650; }
+  .cell.zero { color: #c3c7cf; font-weight: 400; }
+  .cell.star { box-shadow: 0 0 0 1.5px #d4af37; background: #fff8e1; }
+  .typ { display: inline-flex; align-items: center; gap: 6px; }
+  .legend { font-size: 11.5px; color: var(--muted); margin: 8px 2px 0; display: flex; gap: 10px; align-items: center; }
+  .mid { display: grid; grid-template-rows: minmax(0, 1fr); padding: 12px; min-height: 0; }
+  .side { border-left: 1px solid var(--line); display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+  .tabs { display: flex; border-bottom: 1px solid var(--line); padding: 0 8px; }
+  .tabs button { border: 0; background: none; padding: 10px 10px; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; display: inline-flex; gap: 6px; align-items: center; }
+  .tabs button.on { color: var(--ink); border-bottom-color: var(--ink); font-weight: 600; }
+  .pane { overflow: auto; padding: 12px; display: none; flex-direction: column; gap: 8px; }
+  .pane.on { display: flex; }
+  .grp { font-size: 11px; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-top: 6px; display: flex; gap: 6px; align-items: center; }
+
+  .recent { margin-top: auto; border-top: 1px solid var(--line); padding-top: 8px; display: flex; flex-direction: column; gap: 4px; }
+  .palette { position: fixed; inset: 0; background: rgba(20,22,28,.35); display: none; justify-content: center; align-items: flex-start; padding-top: 8vh; z-index: 30; }
+  .palette.open { display: flex; }
+  .pal { width: min(760px, calc(100% - 32px)); max-height: 80vh; background: var(--bg); border-radius: 16px; box-shadow: 0 30px 80px rgba(0,0,0,.25); display: flex; flex-direction: column; overflow: hidden; }
+  .pal input { border: 0; border-bottom: 1px solid var(--line); padding: 16px 18px; font: inherit; font-size: 16px; outline: none; }
+  .pal .list { overflow: auto; padding: 6px; }
+  .pitem { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 4px 12px; align-items: center; padding: 8px 10px; border-radius: 10px; cursor: pointer; }
+  .pitem.sel, .pitem:hover { background: var(--soft); }
+  .pitem .cost { font-weight: 750; font-size: 15px; text-align: center; }
+  .pitem .t { font-weight: 600; }
+  .pitem .need { grid-column: 2 / -1; --tok: 18px; }
+  .pitem.dim { opacity: .45; }
+  .pal .foot { border-top: 1px solid var(--line); padding: 8px 14px; font-size: 12px; color: var(--muted); display: flex; gap: 14px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top"><span class="brand">Colosseum</span><span class="pill strong">Round 3 / 5</span><span class="pill">Producing</span><span class="pill">P1 to act</span>
+    <span class="spacer"></span><button class="btn" id="open">${'Programs for sale'} <kbd>P</kbd></button><span class="hint"><kbd>1</kbd>–<kbd>3</kbd> tabs</span><button class="btn small">New game</button></div>
+  <div class="ledger" id="ledger"></div>
+  <div class="mid board-fit" id="board"></div>
+  <div class="side"><div class="tabs" id="tabs"></div><div style="min-height:0;display:grid" id="panes"></div></div>
+</div>
+<div class="palette" id="palette"><div class="pal"><input id="q" placeholder="Search programs by name or token, e.g. lion, ship, horse"><div class="list" id="list"></div>
+  <div class="foot"><span><kbd>↑</kbd><kbd>↓</kbd> choose</span><span><kbd>Enter</kbd> buy</span><span><kbd>Esc</kbd> close</span><span class="spacer"></span><span>faded: too expensive</span></div></div></div>
+
+<script src="../static/icons.js"></script>
+<script src="shared.js"></script>
+<script>
+  document.getElementById('open').innerHTML = 'Programs for sale <kbd>P</kbd>';
+  const P = STATE.players;
+  const types = ['Gladiator', 'Ship', 'Musician', 'Comedian', 'Priest', 'Horse', 'Lion', 'Chariot', 'Cage', 'Torch', 'Scenery', 'Decoration', 'Joker'];
+  const row = (label, f, cls = '') => `<tr class="${cls}"><td>${label}</td>${P.map((p, i) => `<td class="${i === 0 ? 'me' : ''}">${f(p, i)}</td>`).join('')}</tr>`;
+  const num = (n, star) => `<span class="cell ${n ? '' : 'zero'} ${star ? 'star' : ''}">${n || '·'}</span>`;
+  document.getElementById('ledger').innerHTML = `<table>
+    <tr><th></th>${P.map((p, i) => `<th class="${i === 0 ? 'me' : ''}" title="${p.seat}"><span class="dot" style="--pc:${pColor(i)}"></span>${pName(i)}</th>`).join('')}</tr>
+    ${row(`<span class="typ">${icon('spectators')} best</span>`, (p) => `<b style="font-size:15px">${p.best}</b>`)}
+    ${row(`<span class="typ">${icon('coins')} coins</span>`, (p) => num(p.coins))}
+    ${row('<span class="typ">arena</span>', (p) => num(p.arena.len))}
+    ${row(`<span class="typ">${icon('medal')} medals</span>`, (p) => num(p.medals))}
+    ${row(`<span class="typ">${icon('ticket')} tickets</span>`, (p) => num(p.tickets))}
+    ${row(`<span class="typ">${icon('podium')} podiums</span>`, (p) => num(p.podiums))}
+    ${row(`<span class="typ">${icon('loge')} loge</span>`, (p) => (p.loge ? '<b>yes</b>' : num(0)))}
+    ${types.map((a, k) => row(`<span class="typ">${tok(a, { size: 'sm' })} ${a}</span>`, (p, i) => num(p.assets[a] || 0, STATE.stars[a] === i), k === 0 ? 'sep' : '')).join('')}
+  </table><div class="legend"><span class="cell star">4</span> holds the star (needs ${RULES.starThreshold}+ and the most)</div>`;
+  document.getElementById('board').innerHTML = board(`<div class="row between"><b>Markets</b><span class="row"><span class="hint">Rolled</span>${diceHtml()}</span></div>${marketsHtml()}${supplyHtml()}<div class="recent"><div class="row between"><b>Recent</b><span class="hint">full log: <kbd>3</kbd></span></div><div class="log">${STATE.log.slice(-6).map((e) => `<div class="e ${e.k} ${e.n ? 'new' : ''}">${e.t}</div>`).join('')}</div></div>`);
+
+  const tabs = [['turn', 'Turn'], ['held', 'Programs held'], ['log', 'Log']];
+  document.getElementById('tabs').innerHTML = tabs.map(([k, l], i) => `<button data-tab="${k}" class="${i ? '' : 'on'}">${l} <kbd>${i + 1}</kbd></button>`).join('');
+  document.getElementById('panes').innerHTML = `
+    <div class="pane on" data-pane="turn"><div class="row"><span class="dot" style="--pc:var(--p0)"></span><b>Your turn</b></div>${actionsHtml()}</div>
+    <div class="pane" data-pane="held">${P.map((p, i) => `<div class="grp"><span class="dot" style="--pc:${pColor(i)}"></span>${pName(i)} · ${p.seat}</div>${p.programs.map((pr) => programLine(pr, p.assets, { short: true })).join('')}`).join('')}</div>
+    <div class="pane" data-pane="log">${logHtml()}</div>`;
+  const setTab = (k) => {
+    document.querySelectorAll('[data-tab]').forEach((b) => b.classList.toggle('on', b.dataset.tab === k));
+    document.querySelectorAll('[data-pane]').forEach((b) => b.classList.toggle('on', b.dataset.pane === k));
+  };
+  document.getElementById('tabs').onclick = (e) => { const b = e.target.closest('[data-tab]'); if (b) setTab(b.dataset.tab); };
+
+  // Command palette for programs for sale.
+  const me = P[0];
+  const pal = document.getElementById('palette');
+  const q = document.getElementById('q');
+  let sel = 0;
+  const items = () => STATE.forSale.map(event).filter((ev) => {
+    const s = q.value.trim().toLowerCase();
+    return !s || ev.name.toLowerCase().includes(s) || ev.requirements.some((r) => r.toLowerCase().startsWith(s));
+  });
+  const draw = () => {
+    const list = items();
+    sel = Math.min(sel, Math.max(0, list.length - 1));
+    document.getElementById('list').innerHTML = list.map((ev, i) => `<div class="pitem ${i === sel ? 'sel' : ''} ${ev.cost > me.coins ? 'dim' : ''}">
+      <span class="cost">${ev.cost}</span><span class="row" style="flex-wrap:nowrap"><span class="t">${ev.name}</span>${arenaIcon(ev)}</span>
+      <span class="row">${ladder(ev, true)}<span class="hint">hold ${matched(ev, me.assets)}/${ev.requirements.length}</span></span>
+      ${needRow(ev, me.assets, { size: 'xs' })}</div>`).join('') || '<div class="hint" style="padding:12px">No program matches</div>';
+  };
+  const open = (v) => { pal.classList.toggle('open', v); if (v) { q.value = ''; sel = 0; draw(); q.focus(); } };
+  document.getElementById('open').onclick = () => open(true);
+  pal.onclick = (e) => { if (e.target === pal) open(false); };
+  q.oninput = () => { sel = 0; draw(); };
+  document.addEventListener('keydown', (e) => {
+    if (pal.classList.contains('open')) {
+      if (e.key === 'Escape') open(false);
+      if (e.key === 'ArrowDown') { sel += 1; draw(); e.preventDefault(); }
+      if (e.key === 'ArrowUp') { sel = Math.max(0, sel - 1); draw(); e.preventDefault(); }
+      return;
+    }
+    if (e.key === 'p' || e.key === 'P') { open(true); e.preventDefault(); }
+    const t = tabs[Number(e.key) - 1];
+    if (t) setTab(t[0]);
+  });
+  mockTag(5, 'Ledger');
+</script>
+</body>
+</html>

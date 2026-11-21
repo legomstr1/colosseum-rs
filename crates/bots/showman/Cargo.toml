@@ -1,0 +1,9 @@
+[package]
+name = "colosseum-bot-showman"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Colosseum bot: Stars, nobles and medals optimizer"
+
+[dependencies]
+colosseum-engine.workspace = true

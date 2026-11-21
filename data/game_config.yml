@@ -1,8 +1,22 @@
+# Colosseum game configuration.
+#
+# Every number the engine uses comes from this file or events.yml.
+# Rulings the rulebook leaves open are listed in CLAUDE.md.
+
+num_rounds: 5
+starting_coins: 30
+
+board:
+  size: 36
+
+# Arena squares on the board for each player, by player count.
+# Each arena must be a run of contiguous squares (clockwise).
 starting_positions:
   3: [[8, 9], [21, 22], [32, 33]]
   4: [[3, 4], [14, 15], [23, 24], [32, 33]]
   5: [[2, 3], [8, 9], [15, 16], [23, 24], [32, 33]]
 
+# Starting squares of the nobles. These squares are also the resting places.
 noble_positions:
   - [0, Emperor]
   - [6, Senator]
@@ -11,7 +25,82 @@ noble_positions:
   - [26, Consul]
   - [30, Senator]
 
+# Spectators added for each noble standing in the producing player's arena.
+noble_spectators:
+  Emperor: 7
+  Consul: 5
+  Senator: 3
+
+dice:
+  # A number is a fixed face; a list is a face where the roller picks
+  # one of the listed distances when they use the die.
+  faces: [[1, 2, 3], 2, 3, 4, 5, 6]
+  base_count: 1
+  loge_count: 2 # dice rolled by a player with an Emperor's loge
+
+arena:
+  max_squares: 4
+  expansion_cost: 10
+  # Arena squares needed to produce an event, indexed by the event's `size`.
+  squares_required_by_event_size: [2, 3, 4]
+
+investing:
+  investments_per_phase: 1
+  season_ticket_cost: 10
+  emperor_loge_cost: 5
+  extra_investment_medal_cost: 2
+  special_event_extra_investments: 1 # one token turns 1 investment into 2
+
+acquiring:
+  markets: 5
+  batch_size: 3
+  minimum_opening_bid: 8
+
+trading:
+  # Not in the rulebook; caps that keep bot-vs-bot negotiation finite while
+  # leaving room for real haggling. Counted per other player, per turn.
+  max_offers_per_partner: 10
+  max_counter_offers_per_partner: 10
+
+programs:
+  # Each player is dealt one program from each pool; leftovers leave the game.
+  starting_hand_pools:
+    - [1, 2, 3, 4, 5]
+    - [6, 7, 8, 9, 10]
+  # Programs for sale. Any of them can be bought. Starting programs (the
+  # pools above) are never for sale.
+  for_sale: [11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+
+scoring:
+  previous_program_bonus: 5 # per other program already produced
+  season_ticket_bonus: 5
+  star_award_bonus: 4 # per star held whose asset type the event uses
+  podium_bonus: 3
+  medal_bonus: 3 # per Emperor medal spent on an event
+
+stars:
+  threshold: 3 # minimum count of a type to hold its star award
+  assets:
+    - Gladiator
+    - Ship
+    - Musician
+    - Comedian
+    - Priest
+    - Horse
+    - Lion
+
+supply:
+  medals: 18
+  podiums: 4
+  season_tickets: 10
+  emperor_loges: 5
+
+medals:
+  coin_value: 6
+  max_noble_move: 3
+
 assets:
+  # Every asset token in the game (green and orange backs).
   total:
     Gladiator: 20
     Comedian: 12
@@ -29,7 +118,9 @@ assets:
     Emperor: 4
     SpecialEvent: 4
 
-  starting_assets:
+  # Green-backed starting tokens: fill the markets, then deal to players.
+  # Leftovers are the first refill source. Everything else goes in the bag.
+  starting:
     Gladiator: 10
     Comedian: 5
     Musician: 4
@@ -42,12 +133,12 @@ assets:
     Decoration: 3
     Chariot: 1
     Cage: 1
+    Joker: 0
+    Emperor: 0
+    SpecialEvent: 0
 
-  star_performers:
-    - Gladiator
-    - Ship
-    - Musician
-    - Comedian
-    - Priest
-    - Horse
-    - Lion
+  # Green-backed tokens dealt to each player, by player count.
+  starting_per_player:
+    3: 8
+    4: 6
+    5: 5

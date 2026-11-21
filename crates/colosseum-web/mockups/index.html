@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Colosseum layout mockups</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  body { overflow: auto; background: #efe8da; }
+  main { max-width: 1100px; margin: 0 auto; padding: 32px 16px 48px; display: flex; flex-direction: column; gap: 16px; }
+  h1 { margin: 0; font-size: 26px; }
+  .goals { display: flex; flex-wrap: wrap; gap: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
+  a.m { display: flex; flex-direction: column; gap: 8px; padding: 16px; border-radius: var(--r-lg); background: var(--bg); border: 1px solid var(--line); color: inherit; text-decoration: none; }
+  a.m:hover { border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink); }
+  a.m h2 { margin: 0; font-size: 17px; display: flex; gap: 8px; align-items: baseline; }
+  a.m h2 span { color: var(--muted); font-weight: 500; font-size: 14px; }
+  a.m p { margin: 0; color: #3c414c; line-height: 1.45; }
+  dl { margin: 0; display: grid; grid-template-columns: 92px 1fr; gap: 4px 10px; font-size: 12.5px; }
+  dt { color: var(--muted); }
+  dd { margin: 0; }
+  .note { font-size: 13px; color: var(--muted); line-height: 1.5; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Colosseum layout mockups</h1>
+  <h1 style="margin-top:8px">Round 4</h1>
+  <p class="note">Stage Bench, iterated: dice show Roman numerals (I–III, IV, V, VI), programs carry their numbers everywhere (the programs list, your seat, opponents' pills, produce cards), your seat is wider and lists your programs by name, and hovering an opponent shows theirs. Trading has its own stage in five states.</p>
+  <div class="grid">
+    <a class="m" href="14-stage-bench-v2.html"><h2>14 · Stage Bench v2 <span>the working design</span></h2>
+      <p>Use the dark pill at the top to switch 3/4/5 players, and while trading, the trade state. Click a phase in the tracker to preview its stage.</p></a>
+    <a class="m" href="15-trade-gallery.html"><h2>15 · Trade and player counts <span>gallery</span></h2>
+      <p>All five trade states (propose, incoming, counter, waiting, watching) and several phases at 3, 4 and 5 players, side by side.</p></a>
+  </div>
+  <h1 style="margin-top:8px">Round 3</h1>
+  <p class="note">Built from Phase Stage (10), with more room and fewer words. The spaces are square, and the ring picks whichever shape (10×10 up to 14×6) gives the biggest squares in the space it has. The middle shows only what the current phase needs: icons, dice with pips, and program cards that highlight the score you'd get now. Use the dark pill in the bottom-right corner to switch between 3, 4 and 5 players, and click a phase in the tracker to preview its stage.</p>
+  <div class="grid">
+    <a class="m" href="11-stage-bench.html"><h2>11 · Stage and Bench <span>seats underneath</span></h2>
+      <p>Wide ring with all players on an equal bench below it. With 5 players the bench just gets narrower seats.</p></a>
+    <a class="m" href="12-stage-column.html"><h2>12 · Stage and Column <span>seats on the right</span></h2>
+      <p>Seats stacked on the right, so the ring keeps its height and turns squarer (11×9). More players means shorter seats, not a smaller board.</p></a>
+    <a class="m" href="13-open-floor.html"><h2>13 · Open Floor <span>light us versus them</span></h2>
+      <p>Your seat and programs on the left; opponents as chips in the top bar (hover for their seat). The ring gets the most space of the three.</p></a>
+  </div>
+  <h1 style="margin-top:8px">Round 2</h1>
+  <p class="note">From the feedback on round 1: light mode only on the tan table from Tabletop; the round and phase tracker from Night HUD; the program list from Ledger without search, showing every spectator fall-off step; player tokens always drawn one tile each; rectangular boards that fill the width; and the board itself takes clicks. In every one, pick a die, click a noble to see its moves, or click a faded noble on a dashed square to move it.</p>
+  <div class="grid">
+    <a class="m" href="6-wide-arena.html"><h2>6 · Wide Arena <span>14×6 track</span></h2>
+      <p>A long, low ring as wide as the screen. Opponents across the top, you along the bottom (program cards with fall-off and a Produce button). The ring's middle holds the turn zone, markets and log side by side.</p>
+      <dl><dt>Programs</dt><dd>List modal, <kbd>P</kbd></dd><dt>Us vs them</dt><dd>Yes, top versus bottom</dd></dl></a>
+    <a class="m" href="7-stadium.html"><h2>7 · Stadium <span>11×9, you left, them right</span></h2>
+      <p>The board stands at full height between your column and theirs. The middle is the stadium floor: tracker, dice and move chips, markets, then the log filling the rest.</p>
+      <dl><dt>Programs</dt><dd>Button under your column, or <kbd>P</kbd></dd><dt>Us vs them</dt><dd>Yes, left versus right</dd></dl></a>
+    <a class="m" href="8-quarters.html"><h2>8 · Quarters <span>players beside their arenas</span></h2>
+      <p>The whole screen is a 12×8 ring. Each player's panel sits inside the ring next to their own arena squares, tinted their colour. The turn controls and markets take the small courtyard in the middle.</p>
+      <dl><dt>Programs</dt><dd>List modal, <kbd>P</kbd>; log is a popover, <kbd>L</kbd></dd><dt>Us vs them</dt><dd>No: everyone is placed by the board</dd></dl></a>
+    <a class="m" href="9-inside-the-ring.html"><h2>9 · Inside the Ring <span>yours inside, theirs outside</span></h2>
+      <p>Everything that's yours is inside the ring: turn controls, tokens, and program cards you produce from. Opponents line up outside on the right; markets, supply and the log outside on the left.</p>
+      <dl><dt>Programs</dt><dd>List modal, <kbd>P</kbd></dd><dt>Us vs them</dt><dd>Strongly</dd></dl></a>
+    <a class="m" href="10-phase-stage.html"><h2>10 · Phase Stage <span>the middle changes by phase</span></h2>
+      <p>A 13×7 ring whose middle is a stage for the current phase: investment choices (and a marked square on the ring to expand your arena), big markets to auction, a trade builder, dice and moves, closing results. All four players sit equal underneath. Click a phase in the tracker to preview each one.</p>
+      <dl><dt>Programs</dt><dd>List modal, <kbd>P</kbd>, or the "Buy a program" choice</dd><dt>Us vs them</dt><dd>No: four equal seats</dd></dl></a>
+  </div>
+  <h1 style="margin-top:8px">Round 1</h1>
+
+  <p class="note">Five directions for the browser GUI. All show the same moment (round 3, producing, P1 holding a 1–3 and a 5) with the real icons and colors. Static HTML: open one, press <kbd>P</kbd> for programs for sale, <kbd>Esc</kbd> to close.</p>
+  <div class="goals"><span class="pill strong">No page scroll at 1280×800 and up</span><span class="pill strong">Programs for sale behind a button + <kbd>P</kbd></span><span class="pill strong">Players, markets, turn and log always visible</span></div>
+  <div class="grid">
+    <a class="m" href="1-command-rail.html"><h2>1 · Command Rail <span>closest to today</span></h2>
+      <p>The board fills the left at full height. One right rail: your turn on top, then players as collapsible rows (yours open). Log moves into the board's empty middle.</p>
+      <dl><dt>Programs</dt><dd>Slide-over drawer from the right</dd><dt>Good for</dt><dd>Smallest change from the current code</dd><dt>Risk</dt><dd>Rail gets tall with 5 players open</dd></dl></a>
+    <a class="m" href="2-tabletop.html"><h2>2 · Tabletop <span>seated around the board</span></h2>
+      <p>Opponents sit on the left, top and right edges like the physical table. Your tokens and programs are a hand along the bottom; turn controls beside it. Warm stone palette.</p>
+      <dl><dt>Programs</dt><dd>Centered modal of cards</dd><dt>Good for</dt><dd>"Who has what" at a glance, table feel</dd><dt>Risk</dt><dd>Board shrinks; 5 players need a second top seat</dd></dl></a>
+    <a class="m" href="3-night-hud.html"><h2>3 · Night HUD <span>game-style overlay</span></h2>
+      <p>Dark screen, board as the stage with big dice in the middle. Floating scoreboard (click to expand a player), round/phase tracker, log, and a one-line turn dock where each noble move is a single chip.</p>
+      <dl><dt>Programs</dt><dd>Bottom sheet that rises over the dock</dd><dt>Good for</dt><dd>Fast play, fewest clicks for moves</dd><dt>Risk</dt><dd>Dock must reshape for trading and auctions</dd></dl></a>
+    <a class="m" href="4-my-hand.html"><h2>4 · My Hand <span>me versus them</span></h2>
+      <p>Opponents shrink to one strip across the top (hover for detail). Turn controls live inside the board's middle. Your programs are cards with a progress meter; markets and log on the right.</p>
+      <dl><dt>Programs</dt><dd>Full-screen catalog, opened from a "+" card in your hand</dd><dt>Good for</dt><dd>Planning your own events</dd><dt>Risk</dt><dd>Opponent detail is a hover away</dd></dl></a>
+    <a class="m" href="5-ledger.html"><h2>5 · Ledger <span>data first</span></h2>
+      <p>A table of token type × player on the left shows star races and trade partners at once. Board in the middle; a tabbed right panel (Turn / Programs held / Log, keys 1–3).</p>
+      <dl><dt>Programs</dt><dd>Searchable command palette (type "lion"), arrow keys + Enter</dd><dt>Good for</dt><dd>Keyboard play, analysis, bot watching</dd><dt>Risk</dt><dd>Less visual; tokens become numbers</dd></dl></a>
+  </div>
+  <p class="note">Pieces mix freely: e.g. the ledger table from 5 in the rail of 1, or the move chips from 3 in any layout. Mockup code lives in <code>crates/colosseum-web/mockups/</code> and isn't served by the game server.</p>
+</main>
+</body>
+</html>

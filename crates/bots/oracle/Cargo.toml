@@ -1,0 +1,15 @@
+[package]
+name = "colosseum-bot-oracle"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Colosseum bot: Cheap lookahead search"
+
+[dependencies]
+colosseum-engine.workspace = true
+serde.workspace = true
+
+[dev-dependencies]
+colosseum-bot-planner = { path = "../planner" }
+colosseum-bot-auctioneer = { path = "../auctioneer" }
+colosseum-bot-trader = { path = "../trader" }

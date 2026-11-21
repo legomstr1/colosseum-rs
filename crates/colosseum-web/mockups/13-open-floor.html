@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup 13 · Open Floor</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="round2.css">
+<link rel="stylesheet" href="round3.css">
+<style>
+  /* The ring gets nearly the whole screen. Opponents shrink to chips in the
+     top bar (hover or click one for their full seat); your own seat stays
+     open on the left, since your tokens matter every turn. */
+  .app { height: 100vh; display: grid; grid-template-columns: 280px minmax(0, 1fr); grid-template-rows: auto minmax(0, 1fr); gap: 14px 18px; padding: 12px 18px 16px; }
+  .bar3 { grid-column: 1 / -1; }
+  .mine { display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+  .mine .seat3 { --tok: 26px; }
+  .mine .progs { display: flex; flex-direction: column; gap: 6px; }
+  .mine .prow { display: flex; align-items: center; gap: 8px; padding: 8px 10px; border-radius: 12px; background: var(--bg); border: 1px solid var(--line); font-size: 12.5px; }
+  .mine .prow.done { opacity: .5; }
+  .mine .prow b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .chips3 { display: flex; gap: 8px; }
+  .bar3 { gap: 16px; }
+  .bar3 .tracker.inline .phases { min-width: 270px; }
+  .ochip { position: relative; display: inline-flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border-radius: 999px; background: var(--bg); border: 1px solid var(--line); border-bottom: 3px solid var(--pc); cursor: pointer; }
+  .ochip .best { font-weight: 800; display: inline-flex; gap: 3px; align-items: center; }
+  .ochip .coins { display: inline-flex; gap: 3px; align-items: center; color: #6b6355; font-size: 12.5px; }
+  .ochip .pop { display: none; position: absolute; top: calc(100% + 8px); left: 0; width: 320px; z-index: 30; cursor: default; box-shadow: 0 16px 36px rgba(60,40,10,.18); border-radius: 16px; }
+  .ochip:hover .pop, .ochip.open .pop { display: block; }
+  .ochip:hover { border-color: var(--line-strong); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="bar3" id="bar"></div>
+  <div class="mine" id="mine"></div>
+  <div class="ring-area" id="ring"></div>
+</div>
+<script src="../static/icons.js"></script>
+<script src="shared.js"></script>
+<script src="round2.js"></script>
+<script src="round3.js"></script>
+<script>
+  const chips = () => `<span class="chips3">${STATE.players.map((p, i) => i === 0 ? '' : `<span class="ochip" style="--pc:${pColor(i)}"><span class="dot"></span><b>${pName(i)}</b><span class="coins">${icon('coins')}${p.coins}</span><span class="best">${icon('spectators')}${p.best}</span><div class="pop">${seat(i, { tok: 'sm' })}</div></span>`).join('')}</span>`;
+  const drawBar = () => { document.getElementById('bar').innerHTML = `<span class="brand">Colosseum</span>${trackerHtml({ inline: true, clickable: true, phase: VIEW.phase })}${chips()}<span class="spacer"></span>${topButtons()}`; };
+  const drawMine = () => {
+    const me = STATE.players[0];
+    document.getElementById('mine').innerHTML = `${seat(0, { tok: '' })}
+      <div class="progs">${me.programs.map((pr) => { const ev = event(pr.id); return `<div class="prow ${pr.produced ? 'done' : ''}" title="${ev.name}">${arenaIcon(ev)}<b>${ev.name}</b>${pr.produced ? CHECK : `${icon('spectators')}${ev.base_score}`}</div>`; }).join('')}</div>`;
+  };
+  drawBar(); drawMine();
+  BOARDS.push(drawBar, drawMine);
+  mountRing3(document.getElementById('ring'), stageHtml);
+  mountChrome();
+</script>
+</body>
+</html>

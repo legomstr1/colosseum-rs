@@ -1,0 +1,20 @@
+[package]
+name = "colosseum-trainer"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Unattended self-play tuner for Colosseum bot parameters"
+
+[[bin]]
+name = "train"
+path = "src/main.rs"
+
+[dependencies]
+colosseum-engine.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+colosseum-bot-oracle = { path = "../bots/oracle" }
+colosseum-bot-maestro = { path = "../bots/maestro" }
+colosseum-bot-chameleon = { path = "../bots/chameleon" }
+colosseum-bot-house = { path = "../bots/house" }

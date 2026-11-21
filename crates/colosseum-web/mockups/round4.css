@@ -1,0 +1,85 @@
+/* Round 4 mockups (14, 15): Roman dice, program numbers, trade stage,
+   Stage Bench v2 seats. Loaded after round3.css. */
+
+/* ---------- dice ---------- */
+.bigdie { display: inline-flex; align-items: center; justify-content: center; }
+.roman { font-family: Georgia, 'Times New Roman', serif; font-weight: 700; color: #2a2620; font-size: calc(var(--s) * .42); letter-spacing: .02em; line-height: 1; }
+.roman.long { font-size: calc(var(--s) * .27); letter-spacing: 0; }
+.bigdie.on .roman { color: #2a2620; }
+
+/* ---------- program numbers ---------- */
+.pno.sm { width: 22px; height: 22px; font-size: 12px; border-radius: 6px; flex: none; }
+.pno.xs { width: 17px; height: 17px; font-size: 10px; border-radius: 4px; flex: none; }
+.ppill { gap: 4px; padding: 2px 6px 2px 2px; }
+
+/* ---------- trade stage ---------- */
+.stage3.phase-Trading { justify-content: stretch; align-items: stretch; padding: 14px 18px; gap: 10px; }
+.tstage { height: 100%; display: flex; flex-direction: column; gap: 10px; justify-content: space-between; --tok: calc(var(--s) * .3); }
+.trow { display: flex; align-items: center; gap: 10px; }
+.hand-line { display: flex; align-items: center; justify-content: center; padding: 8px 12px; border-radius: 14px; background: color-mix(in srgb, var(--pc) 8%, white); border: 1.5px solid color-mix(in srgb, var(--pc) 35%, white); min-height: calc(var(--tok) + 18px); }
+.hand-line.dim .tokbtn2:not(.leaving) { opacity: .35; }
+.hand { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; }
+.hgrp { display: inline-flex; gap: 3px; }
+.empty-hand { height: var(--tok); }
+.tokbtn2 { border: 0; background: none; padding: 0; cursor: pointer; border-radius: 8px; }
+.tokbtn2:hover .tok { outline: 2px solid var(--ink); outline-offset: 1px; }
+.tokbtn2.leaving .tok { outline: 2.5px solid var(--ink); outline-offset: 1px; }
+.deal { display: flex; flex-direction: column; gap: 8px; align-items: center; }
+.deal.big { flex: 1; justify-content: center; --tok: calc(var(--s) * .36); }
+.flow { display: grid; grid-template-columns: 54px minmax(0, auto) 26px 54px; gap: 10px; align-items: center; }
+.flow .who { display: inline-flex; align-items: center; justify-content: center; height: 28px; border-radius: 999px; font-weight: 750; font-size: 12px; color: #fff; }
+.flow .who.a { background: var(--a); } .flow .who.b { background: var(--b); }
+.flow .tray { display: flex; align-items: center; gap: 4px; min-width: 220px; min-height: calc(var(--tok) + 14px); padding: 6px 10px; border-radius: 12px; background: #fff; border: 1.5px dashed var(--line-strong); }
+.flow .arrow { font-size: 20px; color: #9b8c6e; text-align: center; }
+.flow .slot { flex: 1; }
+.cpile { display: inline-flex; align-items: center; gap: 3px; margin-left: auto; font-weight: 750; color: #7a5a00; background: var(--gold-soft); border-radius: 999px; padding: 2px 9px; }
+.cstep { margin-left: auto; display: inline-flex; align-items: center; border: 1px solid var(--line-strong); border-radius: 999px; overflow: hidden; background: var(--bg); }
+.cstep button { border: 0; background: none; width: 26px; height: 26px; cursor: pointer; }
+.cstep span { min-width: 40px; display: inline-flex; gap: 3px; align-items: center; justify-content: center; font-weight: 700; color: #7a5a00; }
+.order { display: inline-flex; align-items: center; gap: 4px; font-size: 11.5px; }
+.odot { padding: 2px 8px; border-radius: 999px; border: 1.5px solid var(--pc); color: var(--ink); font-weight: 650; opacity: .55; }
+.odot.now { background: var(--pc); color: #fff; opacity: 1; }
+.osep { color: #b9ad97; }
+.from-chip { display: inline-flex; align-items: center; height: 30px; padding: 0 12px; border-radius: 999px; background: var(--pc); color: #fff; font-weight: 750; }
+.was { display: flex; flex-direction: column; gap: 2px; opacity: .45; --tok: 16px; transform-origin: left center; }
+.was .flow { grid-template-columns: 36px auto 16px 36px; gap: 5px; }
+.was .flow .who { height: 18px; font-size: 10px; }
+.was .flow .tray { min-width: 0; min-height: 0; padding: 2px 6px; }
+.round-btn { width: 56px; height: 56px; border-radius: 999px; border: 2px solid var(--line-strong); background: #fff; font-size: 24px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+.round-btn.yes { background: #2f8a57; border-color: #2f8a57; color: #fff; }
+.round-btn.no { color: #b4473b; }
+.round-btn.counter { color: #6b6355; }
+.round-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 0 var(--line-strong); }
+.waitwho { display: flex; align-items: center; justify-content: center; gap: 10px; }
+.waitwho .from-chip { background: var(--pc); }
+.dots { display: inline-flex; gap: 5px; }
+.dots i { width: 8px; height: 8px; border-radius: 999px; background: #b9ad97; animation: blink 1.2s infinite; }
+.dots i:nth-child(2) { animation-delay: .2s; } .dots i:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+
+/* ---------- Stage Bench v2 seats ---------- */
+.seat4 { position: relative; background: var(--bg); border: 1px solid var(--line); border-radius: 16px; padding: 10px 12px; border-top: 4px solid var(--pc); min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.seat4.turn { box-shadow: 0 0 0 2.5px var(--pc); }
+.seat4 .sh { display: flex; align-items: center; gap: 7px; }
+.seat4 .kind { font-size: 12px; }
+.seat4 .best { font-weight: 800; font-size: 20px; display: inline-flex; gap: 4px; align-items: center; }
+.seat4 .best .ic { color: #8f8778; font-size: 15px; }
+.seat4 .sm { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; font-size: 13px; color: #6b6355; }
+.seat4 .coins { display: inline-flex; gap: 4px; align-items: center; font-weight: 750; color: var(--ink); }
+.seat4 .coins .ic { color: #b08a20; }
+.seat4 .ex { display: inline-flex; gap: 6px; align-items: center; }
+.seat4.me { flex-direction: row; gap: 14px; }
+.seat4.me .col-a { display: flex; flex-direction: column; gap: 8px; min-width: 0; flex: 1; }
+.seat4.me .col-b { display: flex; flex-direction: column; gap: 5px; width: 54%; }
+.prow { display: flex; align-items: center; gap: 7px; padding: 5px 8px; border-radius: 10px; background: var(--soft); font-size: 12.5px; }
+.prow.done { opacity: .5; }
+.prow b { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 600; }
+.prow .sc { display: inline-flex; gap: 3px; align-items: center; font-weight: 700; }
+.seat4.opp { cursor: default; }
+.seat4.opp[data-tpartner] { cursor: pointer; }
+.seat4.opp[data-tpartner]:hover { border-color: var(--pc); }
+.seat4.partner { box-shadow: 0 0 0 2.5px var(--pc); background: color-mix(in srgb, var(--pc) 6%, white); }
+.seat4 .pop { display: none; position: absolute; left: -1px; right: -1px; bottom: calc(100% + 8px); background: var(--bg); border: 1px solid var(--line); border-radius: 14px; padding: 8px; flex-direction: column; gap: 5px; box-shadow: 0 14px 34px rgba(60,40,10,.16); z-index: 20; }
+.seat4.opp:hover .pop { display: flex; }
+.mockctl .msep { width: 1px; height: 16px; background: #555b66; margin: 0 4px; }
+.mockctl { top: 17px; bottom: auto; right: 240px; }

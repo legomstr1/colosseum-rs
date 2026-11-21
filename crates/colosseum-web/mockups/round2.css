@@ -1,0 +1,88 @@
+/* Round 2 mockups (6–10): light only, tan table background, rectangular ring
+   board that doubles as the action surface. Loaded after base.css. */
+:root {
+  --bg: #fffdf8; --soft: #f6f0e4; --line: #e5dccb; --line-strong: #d3c6ad; --sq: #fffdf8;
+  --table: #efe8da; --gold: #c9962b; --gold-soft: #f7e7bf;
+  color-scheme: light;
+}
+body { background: var(--table); }
+.panel { background: var(--bg); border: 1px solid var(--line); border-radius: var(--r-lg); }
+.brand { font-weight: 750; font-size: 17px; letter-spacing: .3px; }
+
+/* ---------- round + phase tracker ---------- */
+.tracker { display: flex; flex-direction: column; gap: 6px; min-width: 260px; }
+.tracker .rnd { display: flex; align-items: baseline; gap: 10px; }
+.tracker .big { font-size: 22px; font-weight: 750; }
+.tracker .big small { font-size: 14px; color: var(--muted); font-weight: 500; }
+.tracker .pips { display: inline-flex; gap: 4px; }
+.tracker .pips span { width: 9px; height: 9px; border-radius: 999px; background: var(--line-strong); }
+.tracker .pips span.done { background: #8f8778; } .tracker .pips span.now { background: var(--gold); box-shadow: 0 0 0 2px var(--gold-soft); }
+.tracker .phases { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; }
+.tracker .ph { display: flex; flex-direction: column; gap: 3px; font-size: 11px; color: var(--muted); text-align: left; border: 0; background: none; padding: 0; }
+.tracker .ph i { height: 5px; border-radius: 3px; background: var(--line-strong); }
+.tracker .ph.done i { background: #8f8778; }
+.tracker .ph.now i { background: var(--gold); } .tracker .ph.now { color: var(--ink); font-weight: 650; }
+.tracker.inline { flex-direction: row; align-items: center; gap: 18px; }
+.tracker.inline .phases { min-width: 360px; }
+button.ph { cursor: pointer; }
+button.ph:hover { color: var(--ink); }
+
+/* ---------- ring board (rectangular) ---------- */
+.rfit { min-width: 0; min-height: 0; }
+.rboard {
+  display: grid; gap: 4px; width: 100%; height: 100%;
+  grid-template-columns: repeat(var(--w), minmax(0, 1fr)); grid-template-rows: repeat(var(--h), minmax(0, 1fr));
+}
+.rboard .sq { border-radius: 8px; }
+.rboard .sq .own { position: absolute; right: 4px; bottom: 2px; font-size: 9.5px; font-weight: 700; color: color-mix(in srgb, var(--pc) 75%, black); }
+.rboard .noble { cursor: pointer; width: 46%; max-width: 34px; }
+.rboard .noble:hover { outline: 2px solid var(--ink); outline-offset: 1px; }
+.rboard .noble.sel { outline: 2.5px solid var(--ink); outline-offset: 2px; }
+.rboard .sq.target { border: 1.5px dashed #9b8c6e; background: #fffaf0; cursor: pointer; }
+.rboard .sq.target.arena { background: color-mix(in srgb, var(--pc) 16%, white); }
+.rboard .sq.target:hover { border-color: var(--ink); border-style: solid; }
+.ghost { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; font-weight: 700; color: var(--ink); z-index: 1; }
+.ghost .noble { opacity: .45; width: 20px; height: 20px; cursor: pointer; }
+.ghost .noble:hover { opacity: 1; }
+.rboard .inner { min-width: 0; min-height: 0; overflow: hidden; }
+
+/* ---------- dice ---------- */
+.die { background: #fff; }
+.die.on { background: var(--ink); }
+
+/* ---------- player tokens: always one tile per token ---------- */
+.ptoks { --tok: 22px; }
+.icons-n { display: inline-flex; gap: 1px; color: #6b6355; }
+
+/* ---------- programs for sale list (full fall-off) ---------- */
+.plist-wrap { display: flex; flex-direction: column; min-height: 0; }
+.plist-head, .plist-row { display: grid; grid-template-columns: 38px 52px minmax(170px, 1.3fr) minmax(250px, 1.4fr) 70px; gap: 4px 14px; align-items: center; }
+.plist-head { font-size: 11px; color: var(--muted); padding: 6px 12px; border-bottom: 1px solid var(--line); text-transform: uppercase; letter-spacing: .5px; }
+.plist-body { overflow: auto; padding: 4px; }
+.plist-row { padding: 8px; border-radius: 10px; cursor: pointer; }
+.plist-row:hover { background: var(--soft); }
+.plist-row.dim { opacity: .5; }
+.plist-row .cost { font-weight: 750; font-size: 15px; display: inline-flex; gap: 3px; align-items: center; justify-content: center; }
+.plist-row .cost .ic { color: #b08a20; }
+.pno { display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: #2a2620; color: #f7e7bf; font-weight: 750; font-size: 14px; font-family: Georgia, 'Times New Roman', serif; }
+.plist-row .t { font-weight: 650; display: flex; align-items: center; gap: 8px; }
+.plist-row .need { grid-column: 3 / -1; --tok: 18px; }
+.plist-row .hold { font-size: 12px; color: var(--muted); text-align: right; }
+.plist-row .hold b { color: var(--ink); }
+.falloff { display: grid; grid-template-columns: repeat(7, 34px); gap: 3px; }
+.falloff span { text-align: center; font-size: 12px; padding: 2px 0; border-radius: 5px; background: #fbeee9; color: #a8463a; font-variant-numeric: tabular-nums; }
+.falloff span.base { background: var(--good-bg); color: var(--good); font-weight: 750; }
+.falloff span.none { background: none; }
+.falloff.head span { background: none; color: var(--muted); font-size: 10.5px; }
+.plist-foot { border-top: 1px solid var(--line); padding: 8px 14px; font-size: 12px; color: var(--muted); display: flex; gap: 14px; }
+
+.modal { position: fixed; inset: 0; background: rgba(60, 45, 20, .3); display: none; justify-content: center; align-items: flex-start; padding: 6vh 16px; z-index: 40; }
+.modal.open { display: flex; }
+.modal > .panel { width: min(860px, 100%); max-height: 88vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 30px 80px rgba(60,40,10,.25); }
+.modal .mhead { display: flex; align-items: center; gap: 10px; padding: 14px 16px 6px; }
+.modal .mhead h2 { margin: 0; font-size: 17px; }
+
+.toast2 { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--ink); color: #fff; padding: 9px 14px; border-radius: 10px; font-size: 13px; z-index: 60; display: none; }
+.toast2.show { display: block; }
+.mchip { display: inline-flex; align-items: center; gap: 4px; background: #fff; }
+.mchip.mine { border-color: var(--p0); box-shadow: inset 0 0 0 1px var(--p0); }

@@ -1,0 +1,14 @@
+  500 / 600 games
+600 games (0 failed) on 16 threads in 1115.1s, seed 2024, sizes [4]
+
+bot          seats   win % vs fair   place   score  win@4p    ms/move    ms/game   max move
+search-house-house-96-wide    600   62.7%   2.51x   0.809    88.3   62.7%   462.9730   29417.31    2215.6ms
+house         1800   12.4%   0.50x   0.397    77.1   12.4%     0.0902       6.16      13.3ms
+(win % is per seat; vs fair = wins / chance-level wins, 1.00x = average)
+(place: 1.0 = always first, 0.0 = always last; chance level is 0.5)
+
+Game duration by table size (wall clock, one thread):
+size    games   mean ms    p50 ms    p95 ms    max ms   actions   games/s
+all       600  29436.53  29075.66  41315.92  54024.88       268       0.0
+4p        600  29436.53  29075.66  41315.92  54024.88       268       0.0
+Throughput: 0.5 games/s across all threads

@@ -1,0 +1,26 @@
+[package]
+name = "colosseum-web"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Browser interface for Colosseum: a JSON API over the engine plus a static web page"
+
+[[bin]]
+name = "colosseum-web"
+path = "src/main.rs"
+
+[dependencies]
+colosseum-engine.workspace = true
+clap.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+axum = "0.8"
+colosseum-bot-oracle = { path = "../bots/oracle" }
+colosseum-bot-maestro = { path = "../bots/maestro" }
+colosseum-bot-chameleon = { path = "../bots/chameleon" }
+colosseum-bot-trader = { path = "../bots/trader" }
+colosseum-bot-planner = { path = "../bots/planner" }
+colosseum-bot-auctioneer = { path = "../bots/auctioneer" }
+colosseum-bot-showman = { path = "../bots/showman" }
+colosseum-bot-rollout = { path = "../bots/rollout" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }

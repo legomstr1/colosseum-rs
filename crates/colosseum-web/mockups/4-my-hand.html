@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup 4 · My Hand</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  /* Idea: separate "me" from "them". Opponents are one slim strip across the
+     top (hover a seat for detail). The turn controls live inside the board's
+     empty middle, next to what they act on. Your programs and tokens sit in a
+     hand along the bottom; markets and the log take the right column. */
+  .app { height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) 330px; grid-template-rows: auto minmax(0, 1fr) auto; }
+  .them { grid-column: 1 / -1; display: flex; gap: 8px; padding: 8px 12px; border-bottom: 1px solid var(--line); align-items: center; }
+  .brand { font-weight: 700; font-size: 16px; margin-right: 6px; }
+  .opp { position: relative; display: flex; align-items: center; gap: 10px; padding: 6px 10px; border-radius: var(--r); border: 1px solid var(--line); border-bottom: 3px solid var(--pc); background: var(--bg); cursor: default; }
+  .opp .best { font-weight: 750; display: inline-flex; gap: 3px; align-items: center; }
+  .opp .pop { display: none; position: absolute; top: calc(100% + 6px); left: 0; z-index: 10; width: 300px; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); box-shadow: 0 14px 34px rgba(0,0,0,.14); padding: 10px; flex-direction: column; gap: 6px; }
+  .opp:hover .pop, .opp.show .pop { display: flex; }
+  .board-fit { padding: 12px; }
+  .board-center { background: var(--bg); border: 2px solid var(--p0); }
+  .board-center .turn-head { display: flex; align-items: center; gap: 8px; font-weight: 650; font-size: 15px; }
+  .board-center .moves { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 14px; }
+  .right { grid-row: 2 / 4; grid-column: 2; border-left: 1px solid var(--line); background: var(--soft); padding: 12px; display: flex; flex-direction: column; gap: 12px; min-height: 0; }
+  .right h4 { margin: 0; font-size: 11px; letter-spacing: .7px; text-transform: uppercase; color: var(--muted); }
+  .right .markets { grid-template-columns: 1fr 1fr; }
+  .right .logbox { flex: 1; min-height: 0; overflow: auto; background: var(--bg); border: 1px solid var(--line); border-radius: var(--r); padding: 8px; }
+  .hand { grid-column: 1; border-top: 1px solid var(--line); padding: 10px 12px; display: grid; grid-template-columns: 250px repeat(3, minmax(0, 1fr)) auto; gap: 10px; background: linear-gradient(#fff, #f8f9fb); }
+  .hand .mine { display: flex; flex-direction: column; gap: 6px; }
+  .pc { border: 1px solid var(--line); border-radius: var(--r); padding: 9px 10px; display: flex; flex-direction: column; gap: 6px; background: var(--bg); box-shadow: 0 2px 0 var(--line); }
+  .pc .t { font-weight: 650; font-size: 13px; }
+  .pc.done { opacity: .55; box-shadow: none; }
+  .pc .meter { height: 5px; border-radius: 3px; background: var(--line); overflow: hidden; }
+  .pc .meter span { display: block; height: 100%; background: var(--good); }
+  .buy { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; border: 1.5px dashed var(--line-strong); border-radius: var(--r); padding: 10px 16px; cursor: pointer; color: var(--muted); text-align: center; font-size: 12.5px; }
+  .buy:hover { border-color: var(--ink); color: var(--ink); }
+  .buy b { font-size: 20px; }
+
+  .catalog { position: fixed; inset: 0; background: rgba(246,247,249,.97); z-index: 30; display: none; flex-direction: column; gap: 12px; padding: 22px 28px; overflow: auto; }
+  .catalog.open { display: flex; }
+  .catalog .prog-grid { grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 12px; }
+  .catalog .pcard { padding: 14px; --tok: 24px; }
+  .catalog .pcard .need { --tok: 24px; }
+  .catalog .prog-head h2 { font-size: 22px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="them" id="them"></div>
+  <div class="board-fit" id="board"></div>
+  <aside class="right" id="right"></aside>
+  <div class="hand" id="hand"></div>
+</div>
+<div class="catalog" id="catalog"><div class="row between"><span class="hint">Programs for sale · <kbd>P</kbd> or <kbd>Esc</kbd> to close</span><button class="btn small" id="close">Back to the board</button></div><div data-programs></div></div>
+
+<script src="../static/icons.js"></script>
+<script src="shared.js"></script>
+<script>
+  document.getElementById('them').innerHTML = `<span class="brand">Colosseum</span><span class="pill strong">Round 3 / 5 · Producing</span>` +
+    [1, 2, 3].map((i) => { const p = STATE.players[i]; return `<div class="opp" style="--pc:${pColor(i)}">
+      <span class="dot"></span><b>${pName(i)}</b><span class="stats-line">${icon('coins')} <b>${p.coins}</b></span>${stacks(p.assets, { size: 'xs' })}<span class="best">${icon('spectators')}${p.best}</span>
+      <div class="pop"><div class="row between"><b>${pName(i)} · ${p.seat}</b>${starsOf(i).map((a) => `<span class="star">${tok(a, { size: 'xs' })}</span>`).join('')}</div><div class="stats-line">${playerStats(p)}</div>${toks(p.assets, { size: 'sm' })}${p.programs.map((pr) => programLine(pr, p.assets, { short: true })).join('')}</div></div>`; }).join('') +
+    `<span class="spacer"></span><span class="hint">Hover a seat for detail</span><button class="btn small">New game</button>`;
+  document.getElementById('board').innerHTML = board(`<div class="turn-head"><span class="dot" style="--pc:var(--p0)"></span>Your turn<span class="hint" style="font-weight:400">· the controls sit inside the board</span></div>${actionsHtml()}`);
+  document.getElementById('right').innerHTML = `<h4>Markets</h4>${marketsHtml({ size: 'sm' })}${supplyHtml()}<h4>Log</h4><div class="logbox">${logHtml()}</div>`;
+  const me = STATE.players[0];
+  document.getElementById('hand').innerHTML = `
+    <div class="mine"><div class="row between"><b><span class="dot" style="--pc:var(--p0)"></span> You · P1</b><span style="font-weight:750">${icon('spectators')} ${me.best}</span></div>
+      <div class="stats-line">${playerStats(me)}</div><div class="row"><span class="hint">Stars</span>${starsOf(0).map((a) => `<span class="star">${tok(a, { size: 'sm' })}</span>`).join('')}</div>${stacks(me.assets)}</div>
+    ${me.programs.map((pr) => { const ev = event(pr.id); const got = matched(ev, me.assets); return `<div class="pc ${pr.produced ? 'done' : ''}">
+      <div class="row" style="flex-wrap:nowrap">${arenaIcon(ev)}<span class="t">${pr.produced ? CHECK + ' ' : ''}${ev.name}</span></div>
+      ${pr.produced ? `${bonusBadge()}<span class="hint">Produced in round 2</span>` : `${ladder(ev)}${needRow(ev, me.assets, { size: 'sm' })}
+      <div class="meter"><span style="width:${(100 * got) / ev.requirements.length}%"></span></div><span class="hint">${got} of ${ev.requirements.length} tokens</span>`}</div>`; }).join('')}
+    <div class="buy" id="open"><b>+</b>Programs<br>for sale<kbd>P</kbd></div>`;
+  const cat = document.getElementById('catalog');
+  const toggle = (v) => cat.classList.toggle('open', v);
+  document.getElementById('open').onclick = () => toggle(true);
+  document.getElementById('close').onclick = () => toggle(false);
+  wirePrograms(cat, toggle);
+  mockTag(4, 'My Hand');
+</script>
+</body>
+</html>

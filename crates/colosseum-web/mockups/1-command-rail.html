@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup 1 · Command Rail</title>
+<link rel="stylesheet" href="base.css">
+<style>
+  /* Idea: the board owns the left side at full height; one fixed rail on the
+     right holds the turn, then the players. Nothing on the page scrolls. */
+  .app { height: 100vh; display: grid; grid-template-rows: auto minmax(0, 1fr); }
+  .top { display: flex; align-items: center; gap: 8px; padding: 10px 16px; border-bottom: 1px solid var(--line); }
+  .brand { font-weight: 700; font-size: 16px; margin-right: 6px; }
+  .main { display: grid; grid-template-columns: minmax(0, 1fr) 400px; min-height: 0; }
+  .board-fit { padding: 14px; }
+  .board-center { justify-content: flex-start; }
+  .rail { border-left: 1px solid var(--line); display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; background: var(--soft); }
+  .turn { background: var(--bg); padding: 12px 14px; border-bottom: 1px solid var(--line); border-top: 3px solid var(--p0); }
+  .turn-banner { display: flex; align-items: center; gap: 8px; font-weight: 650; margin-bottom: 8px; }
+  .players { overflow: auto; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+  .pl { background: var(--bg); border: 1px solid var(--line); border-left: 4px solid var(--pc); border-radius: var(--r); }
+  .pl summary { list-style: none; cursor: pointer; display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; padding: 8px 10px; }
+  .pl summary::-webkit-details-marker { display: none; }
+  .pl .name { font-weight: 650; display: flex; align-items: center; gap: 6px; }
+  .pl .score { font-weight: 700; display: inline-flex; gap: 4px; align-items: center; }
+  .pl .sub { grid-column: 1 / -1; display: flex; gap: 10px; align-items: center; }
+  .pl .body { padding: 0 10px 10px; display: flex; flex-direction: column; gap: 8px; }
+  .pl[open] .sub .toks { display: none; }
+  .pl.turnp { box-shadow: 0 0 0 2px var(--pc); }
+  .center-log { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 6px; border-top: 1px solid var(--line); padding-top: 8px; }
+  .center-log .log { overflow: auto; flex: 1; min-height: 0; }
+  .logbar { border-top: 1px solid var(--line); background: var(--bg); }
+  .logbar summary { padding: 8px 14px; cursor: pointer; font-size: 12.5px; display: flex; gap: 8px; align-items: center; }
+  .logbar .log { max-height: 180px; overflow: auto; padding: 0 10px 10px; }
+
+  .drawer {
+    position: fixed; top: 0; right: 0; bottom: 0; width: min(620px, 100%); background: var(--bg); z-index: 20;
+    box-shadow: -16px 0 40px rgba(0,0,0,.12); transform: translateX(105%); transition: transform .2s ease;
+    display: flex; flex-direction: column; gap: 10px; padding: 16px; overflow: auto;
+  }
+  .drawer.open { transform: none; }
+  .drawer .prog-grid { grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="top">
+    <span class="brand">Colosseum</span>
+    <span class="pill strong">Round 3 / 5</span><span class="pill">Producing</span>
+    <span class="spacer"></span>
+    <button class="btn" id="open-programs">Programs for sale <kbd>P</kbd></button>
+    <span class="pill">seed 41207</span>
+    <button class="btn small">New game</button>
+  </div>
+  <div class="main">
+    <div class="board-fit" id="board"></div>
+    <aside class="rail">
+      <div class="turn" id="turn"></div>
+      <div class="players" id="players"></div>
+    </aside>
+  </div>
+</div>
+<div class="drawer" id="drawer"><div data-programs></div><div><button class="btn ghost small" id="close">Close <kbd>Esc</kbd></button></div></div>
+
+<script src="../static/icons.js"></script>
+<script src="shared.js"></script>
+<script>
+  document.getElementById('board').innerHTML = board(`<div class="row between"><b>Markets</b>${diceHtml()}</div>${marketsHtml()}${supplyHtml()}<div class="center-log"><div class="row between"><b>Log</b><span class="hint">newest at the bottom</span></div>${logHtml()}</div>`);
+  document.getElementById('turn').innerHTML = `<div class="turn-banner"><span class="dot" style="--pc:var(--p0)"></span>Your turn<span class="muted" style="font-weight:400">· move nobles, then produce</span></div>${actionsHtml()}`;
+  document.getElementById('players').innerHTML = STATE.players.map((p, i) => `
+    <details class="pl ${i === STATE.current ? 'turnp' : ''}" style="--pc:${pColor(i)}" ${i === STATE.me ? 'open' : ''}>
+      <summary><span class="name"><span class="dot"></span>${pName(i)} <span class="muted" style="font-weight:400">${p.seat}${STATE.start === i ? ' · starts' : ''}</span></span><span></span>
+        <span class="score">${icon('spectators')} ${p.best}</span>
+        <span class="sub"><span class="stats-line">${playerStats(p)}</span><span class="spacer"></span>${stacks(p.assets, { size: 'xs' })}</span></summary>
+      <div class="body">${starsOf(i).length ? `<div class="row"><span class="hint">Stars</span>${starsOf(i).map((a) => `<span class="star">${tok(a, { size: 'sm' })}</span>`).join('')}</div>` : ''}
+        ${toks(p.assets, { size: 'sm' })}
+        ${p.programs.map((pr) => programLine(pr, p.assets)).join('')}</div>
+    </details>`).join('');
+
+  const drawer = document.getElementById('drawer');
+  const toggle = (v) => drawer.classList.toggle('open', v);
+  document.getElementById('open-programs').onclick = () => toggle(true);
+  document.getElementById('close').onclick = () => toggle(false);
+  wirePrograms(drawer, toggle);
+  mockTag(1, 'Command Rail');
+</script>
+</body>
+</html>

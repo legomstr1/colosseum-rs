@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mockup 15 · Trade and Player Counts</title>
+<link rel="stylesheet" href="base.css">
+<link rel="stylesheet" href="round2.css">
+<style>
+  /* Every trade state and every player count of Stage Bench v2 side by
+     side. Each frame is the live mockup at 1440×900, scaled down; click a
+     caption to open it full size. */
+  body { overflow: auto; }
+  main { max-width: 1500px; margin: 0 auto; padding: 24px 18px 48px; display: flex; flex-direction: column; gap: 14px; }
+  h1 { margin: 0; font-size: 24px; }
+  h2 { margin: 12px 0 0; font-size: 17px; }
+  .note { color: var(--muted); font-size: 13.5px; line-height: 1.5; margin: 0; max-width: 900px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(460px, 1fr)); gap: 16px; }
+  figure { margin: 0; display: flex; flex-direction: column; gap: 6px; }
+  .frame { position: relative; width: 100%; aspect-ratio: 1440 / 900; overflow: hidden; border-radius: 12px; border: 1px solid var(--line-strong); background: var(--table); }
+  .frame iframe { position: absolute; left: 0; top: 0; width: 1440px; height: 900px; border: 0; transform-origin: 0 0; pointer-events: none; }
+  figcaption { font-size: 13px; display: flex; gap: 8px; align-items: baseline; }
+  figcaption a { color: var(--ink); font-weight: 650; }
+  figcaption span { color: var(--muted); }
+</style>
+</head>
+<body>
+<main>
+  <h1>Stage Bench v2: trading and player counts</h1>
+  <p class="note">All frames are mockup 14, live. In trading, tokens move by clicking them: from your hand onto the table to give, from their hand onto the table to ask. Click a token on the table to take it back. Arrows and player colours show which way each side of the deal goes.</p>
+  <h2>Trade states</h2>
+  <div class="grid" id="trade"></div>
+  <h2>Player counts</h2>
+  <div class="grid" id="counts"></div>
+</main>
+<script>
+  const T = [
+    ['propose', 'Propose', 'Pick a partner (button or their seat), click tokens across, set coins, Offer.'],
+    ['incoming', 'Incoming offer', 'Their tokens and yours that would move are outlined; accept, reject or counter.'],
+    ['counter', 'Counter-offer', 'Starts from their offer, which stays visible, faded, at the top.'],
+    ['waiting', 'Waiting', 'Your offer sits on the table while the partner decides.'],
+    ['watching', 'Watching', 'Two other players trading; the order strip shows whose turn it is.'],
+  ];
+  const C = [[3, 'Producing'], [4, 'Acquiring'], [5, 'Producing'], [5, 'Trading&trade=incoming'], [3, 'Investing'], [5, 'Closing']];
+  const fig = (q, title, sub) => `<figure><div class="frame"><iframe loading="lazy" src="14-stage-bench-v2.html?embed=1&${q}"></iframe></div>
+    <figcaption><a href="14-stage-bench-v2.html?${q}">${title}</a><span>${sub}</span></figcaption></figure>`;
+  document.getElementById('trade').innerHTML = T.map(([k, t, s]) => fig(`phase=Trading&trade=${k}`, t, s)).join('');
+  document.getElementById('counts').innerHTML = C.map(([n, ph]) => fig(`players=${n}&phase=${ph}`, `${n} players`, ph.split('&')[0].toLowerCase())).join('');
+  const fit = () => document.querySelectorAll('.frame').forEach((f) => { f.querySelector('iframe').style.transform = `scale(${f.clientWidth / 1440})`; });
+  new ResizeObserver(fit).observe(document.body);
+  fit();
+</script>
+</body>
+</html>

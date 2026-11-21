@@ -1,0 +1,23 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "colosseum-web",
+      "runtimeExecutable": "cargo",
+      "runtimeArgs": ["run", "-p", "colosseum-web", "--", "--port", "8080"],
+      "port": 8080
+    },
+    {
+      "name": "colosseum-web-8081",
+      "runtimeExecutable": "cargo",
+      "runtimeArgs": ["run", "--release", "--target-dir", "target/web-8081", "-p", "colosseum-web", "--", "--port", "8081"],
+      "port": 8081
+    },
+    {
+      "name": "mockups",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "http.server", "8090", "--bind", "127.0.0.1", "--directory", "crates/colosseum-web"],
+      "port": 8090
+    }
+  ]
+}
