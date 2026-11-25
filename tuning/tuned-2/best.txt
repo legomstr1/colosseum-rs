@@ -1,0 +1,1 @@
+coin_early_short=0.225,accept_money_gain=2.5,coin_rich=0.192

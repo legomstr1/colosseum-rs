@@ -1,0 +1,5 @@
+320 games x 2 variants, sizes [4], field ["house"], 1 seat(s), 1024s
+trades accepted: 7614 (11.90/game), with money: 12 (avg 6.8 coins)
+   win%    ±se  place   score   field  variant
+ 37.81%  2.71%  0.643   84.67   79.69  core
+ 68.75%  2.59%  0.845   89.72   77.01  li{s.budget=96}

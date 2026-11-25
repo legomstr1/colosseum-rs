@@ -1,0 +1,1 @@
+coin_rich=0.128,their_gain_weight=0.5,money_offers_per_turn=3,offers_per_turn=10,side_weight=1.25,spare_weight=0.5,money_refusals=3

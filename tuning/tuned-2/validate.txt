@@ -1,0 +1,16 @@
+   win%    ±se  place   score   field  variant
+ 47.88%  1.00%  0.708   81.76   74.27  t1{}
+ 50.20%  1.00%  0.727   82.22   74.00  t2{coin_early_short=0.225,accept_money_gain=2.5,coin_rich=0.192,offers_per_turn=13,money_offers_per_turn=4}
+ 50.08%  1.00%  0.731   82.23   74.06  t2{coin_early_short=0.225,accept_money_gain=2.5,coin_rich=0.192}
+   win%    ±se  place   score   field  variant
+ 48.15%  1.12%  0.717   86.95   79.14  t1{}
+ 48.70%  1.12%  0.720   87.01   79.08  t2{coin_early_short=0.225,accept_money_gain=2.5,coin_rich=0.192,offers_per_turn=13,money_offers_per_turn=4}
+ 48.55%  1.12%  0.719   86.97   79.09  t2{coin_early_short=0.225,accept_money_gain=2.5,coin_rich=0.192}
+   win%    ±se  place   score   field  variant
+ 90.87%  0.74%  0.965   86.53   58.37  t1{}
+ 91.93%  0.70%  0.969   86.93   58.34  t2{coin_early_short=0.225,accept_money_gain=2.5,coin_rich=0.192,offers_per_turn=13,money_offers_per_turn=4}
+ 91.87%  0.71%  0.969   86.84   58.28  t2{coin_early_short=0.225,accept_money_gain=2.5,coin_rich=0.192}
+   win%    ±se  place   score   field  variant
+ 25.00%  0.88%  0.500   82.60    0.00  t1{}
+ 25.00%  0.88%  0.500   82.98    0.00  t2{coin_early_short=0.225,accept_money_gain=2.5,coin_rich=0.192,offers_per_turn=13,money_offers_per_turn=4}
+ 25.00%  0.88%  0.500   83.11    0.00  t2{coin_early_short=0.225,accept_money_gain=2.5,coin_rich=0.192}

@@ -23,3 +23,7 @@ colosseum-bot-chameleon = { path = "../bots/chameleon" }
 colosseum-bot-maestro = { path = "../bots/maestro" }
 colosseum-bot-house = { path = "../bots/house" }
 colosseum-bot-search = { path = "../bots/search" }
+colosseum-bot-live-input = { path = "../bots/live-input" }
+colosseum-bot-tuned-1 = { path = "../bots/tuned-1" }
+colosseum-bot-tuned-2 = { path = "../bots/tuned-2" }
+colosseum-bot-int-event = { path = "../bots/int-event" }

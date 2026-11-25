@@ -34,7 +34,7 @@ const NOBLES = {
 // Tokens that can't change hands in a trade.
 const UNTRADEABLE = new Set(['Emperor', 'SpecialEvent']);
 const SEAT_LABEL = {
-  human: 'Human', search: 'Search (best)', house: 'House', oracle: 'Oracle', maestro: 'Maestro', chameleon: 'Chameleon', trader: 'Trader', planner: 'Planner',
+  human: 'Human', 'live-input': 'Live-input', 'tuned-2': 'Tuned-2', 'tuned-1': 'Tuned-1', 'int-event': 'Int-event', search: 'Search', house: 'House', oracle: 'Oracle', maestro: 'Maestro', chameleon: 'Chameleon', trader: 'Trader', planner: 'Planner',
   auctioneer: 'Auctioneer', showman: 'Showman', rollout: 'Rollout (slow)', greedy: 'Greedy', random: 'Random',
 };
 const PHASES = ['Investing', 'Acquiring', 'Trading', 'Producing', 'Closing'];
@@ -50,6 +50,16 @@ let showPrograms = false;
 let showLog = false;
 let logSeen = 0; // log entries before this index have been seen in the drawer
 let ringObserver = null;
+let replaySeq = 0; // discards step views that arrive after a newer request
+// Move-by-move playback of what the server just applied (see playTrail).
+const SPEEDS = { slow: 1800, normal: 1050, fast: 520, off: 0 };
+const SPEED_LABEL = { slow: 'Slow', normal: 'Normal', fast: 'Fast', off: 'Off' };
+let speed = (() => { try { return localStorage.getItem('colosseum.speed') || 'normal'; } catch { return 'normal'; } })();
+if (!(speed in SPEEDS)) speed = 'normal';
+let playback = null; // {frame, i, total, prevOffer, skipped, wake}
+let playSeq = 0; // a newer playback, or any other view change, stops the current one
+let lastMoves = {}; // seat -> its latest move, shown on the bench
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 function freshUi() {
   return { die: null, noble: null, medal: false, market: null, bid: {}, medals: null, trade: null };
@@ -76,7 +86,7 @@ const n = () => view.players.length;
 
 // The seat the screen is drawn for: the human to act, else the first human.
 function me() {
-  if (view.human_to_act && view.current_player !== null) return view.current_player;
+  if ((view.human_to_act || view.replay) && view.current_player !== null) return view.current_player;
   const h = view.seats.indexOf('human');
   return h >= 0 ? h : 0;
 }
@@ -102,14 +112,13 @@ const sumMap = (m) => Object.values(m).reduce((s, x) => s + x, 0);
 function tok(asset, size = '') {
   const t = TOKENS[asset] || { bg: '#eee', fg: '#555' };
   const cls = ['tok', size, asset === 'Joker' ? 'joker' : '', t.bg === '#ffffff' ? 'white' : ''].join(' ');
-  return `<span class="${cls}" style="--c:${t.bg};color:${t.fg}" title="${asset}">${icon(asset)}</span>`;
+  return `<span class="${cls}" style="--c:${t.bg};color:${t.fg}" title="${asset}" data-a="${asset}">${icon(asset)}</span>`;
 }
 // A player's tokens: one column per type; star types get a gold outline.
 function seatToks(i, size = 'xs') {
   const list = entries(view.players[i].assets);
-  if (!list.length) return '';
   const starOf = new Set(view.stars.filter(([, h]) => h === i).map(([a]) => a));
-  return `<span class="toks">${list.map(([a, k]) => `<span class="tcol ${starOf.has(a) ? 'starcol' : ''}" title="${a}${starOf.has(a) ? ' (star)' : ''}">${
+  return `<span class="toks" data-loc="p${i}">${list.map(([a, k]) => `<span class="tcol ${starOf.has(a) ? 'starcol' : ''}" title="${a}${starOf.has(a) ? ' (star)' : ''}">${
     Array.from({ length: k }, () => tok(a, size)).join('')}</span>`).join('')}</span>`;
 }
 // An event's needs as a row; with `have`, tokens the holder lacks are faded.
@@ -171,15 +180,14 @@ async function api(path, data) {
 }
 
 async function act(action) {
+  if (view.replay) { toast('This is a past position. Use "Play from here" to continue from it.'); return; }
+  if (playback) return;
   try {
     const before = view.log.length;
-    view = await api(`/api/games/${view.id}/actions`, { action });
+    const next = await api(`/api/games/${view.id}/actions`, { action });
     ui = freshUi();
     showPrograms = false;
-    // What happened, including the bots' moves, in a short toast.
-    const fresh = view.log.slice(before).filter((e) => e.kind === 'event').map((e) => e.text);
-    if (fresh.length) toast(fresh.length > 4 ? [...fresh.slice(0, 3), `…and ${fresh.length - 3} more (log: L)`] : fresh);
-    render();
+    await playTrail(next, before);
   } catch (e) {
     toast(e.message);
   }
@@ -205,7 +213,7 @@ function renderSetup() {
           <button class="btn small" ${setup.seats.length <= min ? 'disabled' : ''} data-h="${on(() => { setup.seats.pop(); render(); })}">Remove player</button>
         </div></div>
       <div class="row"><input class="input" id="seed" placeholder="Seed (optional)" value="${esc(setup.seed)}" style="width:170px">
-        <span class="spacer"></span><button class="btn primary big" data-h="${on(startGame)}">Start game</button></div>
+        <span class="spacer"></span><button class="btn big" data-h="${on(pickSaveFile)}">Load game</button><button class="btn primary big" data-h="${on(startGame)}">Start game</button></div>
       <div class="hint">Icons by Lorc, Delapouite and Cathelineau from <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a>, under <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>.</div>
     </div>`;
 }
@@ -215,11 +223,13 @@ async function startGame() {
   const req = { seats: setup.seats };
   if (setup.seed !== '') req.seed = Number(setup.seed);
   try {
-    view = await api('/api/games', req);
+    stopPlayback();
+    const next = await api('/api/games', req);
     ui = freshUi();
     logSeen = 0;
-    location.hash = view.id;
-    render();
+    lastMoves = {};
+    location.hash = next.id;
+    await playTrail(next, 0);
   } catch (e) {
     toast(e.message);
   }
@@ -241,7 +251,161 @@ function topBar() {
   return `<div class="bar"><span class="brand">Colosseum</span>${tracker()}<span class="spacer"></span>
     <button class="iconbtn" data-h="${on(() => { showPrograms = true; render(); })}" title="Programs for sale">Programs <kbd>P</kbd></button>
     <button class="iconbtn" data-h="${on(toggleLog)}" title="Log">Log ${unseen && !showLog ? `<span class="badge">${unseen > 99 ? '99+' : unseen}</span>` : ''}<kbd>L</kbd></button>
-    <button class="btn small ghost" data-h="${on(newGame)}" title="Seed ${view.seed}">New game</button></div>`;
+    <span class="gamebtns">
+      ${view.replay ? '' : `<button class="btn small" ${canUndo() ? `data-h="${on(undo)}"` : 'disabled'} title="Take back your last move (U)">Undo</button>
+      <button class="btn small" ${view.history_len ? `data-h="${on(enterReplay)}"` : 'disabled'} title="Step through the game so far (R)">Replay</button>`}
+      <details class="gamemenu"><summary class="btn small" title="Seed ${view.seed}">Game ▾</summary><div class="menu">
+        <button class="btn small ghost" data-h="${on(saveGame)}" title="Download this game as a file">Save to file</button>
+        <button class="btn small ghost" data-h="${on(pickSaveFile)}" title="Open a saved game file">Load from file</button>
+        <button class="btn small ghost" data-h="${on(newGame)}">New game</button>
+        <label class="speedpick" title="How moves are played back">Animations <select class="input" id="speed">${Object.keys(SPEEDS).map((k) => `<option value="${k}" ${k === speed ? 'selected' : ''}>${SPEED_LABEL[k]}</option>`).join('')}</select></label></div></details></span></div>`;
+}
+
+// ---------- save, load, undo, step through ----------
+const canUndo = () => !view.replay && view.history_len > 0 && view.seats.includes('human');
+
+async function saveGame() {
+  try {
+    const saved = await api(`/api/games/${view.id}/save`);
+    const blob = new Blob([JSON.stringify(saved, null, 1)], { type: 'application/json' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    const stamp = new Date().toISOString().slice(0, 16).replace(/[:T]/g, '-');
+    a.download = `colosseum-${saved.seed}-${stamp}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    toast(`Saved ${saved.history.length} moves`);
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+function pickSaveFile() {
+  let input = document.getElementById('loadfile');
+  if (!input) {
+    input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json,application/json';
+    input.id = 'loadfile';
+    input.className = 'loadfile';
+    document.body.appendChild(input);
+  }
+  input.value = '';
+  input.click();
+}
+
+async function loadSaveFile(file) {
+  try {
+    const saved = JSON.parse(await file.text());
+    if (!Array.isArray(saved.seats) || !Array.isArray(saved.history) || saved.seed === undefined) throw new Error('Not a saved Colosseum game');
+    await openLoaded({ seats: saved.seats, seed: saved.seed, history: saved.history });
+    toast(`Loaded ${saved.history.length} moves`);
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+async function openLoaded(saved) {
+  replaySeq++;
+  stopPlayback();
+  lastMoves = {};
+  view = await api('/api/games/load', saved);
+  ui = freshUi();
+  showLog = false;
+  showPrograms = false;
+  logSeen = view.log.length;
+  location.hash = view.id;
+  render();
+}
+
+async function undo() {
+  stopPlayback();
+  lastMoves = {};
+  try {
+    view = await api(`/api/games/${view.id}/undo`, {});
+    ui = freshUi();
+    logSeen = Math.min(logSeen, view.log.length);
+    render();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+async function enterReplay() {
+  // Start one move back from now, so the first thing on screen is a change.
+  await gotoStep(Math.max(0, view.history_len - 1));
+}
+
+async function gotoStep(step) {
+  stopPlayback();
+  const seq = ++replaySeq;
+  try {
+    const v = await api(`/api/games/${view.id}/step?step=${Math.max(0, step)}`);
+    if (seq !== replaySeq) return;
+    view = v;
+    ui = freshUi();
+    showPrograms = false;
+    logSeen = view.log.length;
+    render();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+async function exitReplay() {
+  replaySeq++;
+  stopPlayback();
+  try {
+    view = await api(`/api/games/${view.id}`);
+    ui = freshUi();
+    logSeen = view.log.length;
+    render();
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+// Starts a new game from this position; the original stays as it was.
+async function playFromHere() {
+  try {
+    const from = view.id;
+    const step = view.replay.step;
+    const saved = await api(`/api/games/${from}/save`);
+    await openLoaded({ seats: saved.seats, seed: saved.seed, history: saved.history.slice(0, step) });
+    toast(`Playing on from move ${step}. The original game is still at #${from}`);
+  } catch (e) {
+    toast(e.message);
+  }
+}
+
+function phaseJump(dir) {
+  const r = view.replay;
+  const steps = r.marks.map((m) => m.step);
+  const target = dir < 0 ? steps.filter((s) => s < r.step).pop() : steps.find((s) => s > r.step);
+  gotoStep(target ?? (dir < 0 ? 0 : r.total));
+}
+
+function replayBar() {
+  const r = view.replay;
+  const ph = view.game_over ? 'Game over' : `Round ${Math.min(view.round, view.num_rounds)} · ${phaseName(view.phase)}`;
+  const move = (m, label) => (m ? `<span>${label}</span><span class="who-chip" style="--pc:${pColor(m[0])}">${pName(m[0])}</span><b>${esc(m[1])}</b>` : '');
+  const b = (label, title, fn, ok) => `<button class="btn small" title="${title}" ${ok ? `data-h="${on(fn)}"` : 'disabled'}>${label}</button>`;
+  return `<div class="replay">
+    ${b('|◀', 'Start (Home)', () => gotoStep(0), r.step > 0)}
+    ${b('◀◀', 'Previous phase (Shift+←)', () => phaseJump(-1), r.step > 0)}
+    ${b('◀', 'Previous move (←)', () => gotoStep(r.step - 1), r.step > 0)}
+    <input type="range" id="replay-range" min="0" max="${r.total}" value="${r.step}" aria-label="Move">
+    ${b('▶', 'Next move (→)', () => gotoStep(r.step + 1), r.step < r.total)}
+    ${b('▶▶', 'Next phase (Shift+→)', () => phaseJump(1), r.step < r.total)}
+    ${b('▶|', 'Latest (End)', () => gotoStep(r.total), r.step < r.total)}
+    <span class="rlabel" id="replay-label">Move ${r.step} / ${r.total}</span><span class="muted">${ph}</span>
+    <span class="spacer"></span>
+    ${b('Play from here', 'Start a new game from this position (the original is kept)', playFromHere, r.step < r.total)}
+    <button class="btn small primary" data-h="${on(exitReplay)}" title="Back to the live game (Esc)">Back to game</button>
+    <div class="ract">${move(r.last, 'Last:')}${r.last && r.next ? '<span class="spacer"></span>' : ''}${move(r.next, 'Next:')}</div>
+  </div>`;
 }
 function toggleLog() {
   showLog = !showLog;
@@ -341,15 +505,15 @@ function ringHtml(W, H, stage) {
       const nb = view.nobles[i];
       const style = `--nc:${NOBLES[nb.kind].bg};color:${NOBLES[nb.kind].fg}`;
       return movable.has(i)
-        ? `<button class="noble ${ui.noble === i ? 'sel' : ''}" style="${style}" title="${nb.kind}" data-h="${on(() => { ui.noble = ui.noble === i ? null : i; drawRing(); })}">${icon(nb.kind)}</button>`
-        : `<span class="noble" style="${style}" title="${nb.kind}">${icon(nb.kind)}</span>`;
+        ? `<button class="noble ${ui.noble === i ? 'sel' : ''}" style="${style}" title="${nb.kind}" data-noble="${i}" data-h="${on(() => { ui.noble = ui.noble === i ? null : i; drawRing(); })}">${icon(nb.kind)}</button>`
+        : `<span class="noble" style="${style}" title="${nb.kind}" data-noble="${i}">${icon(nb.kind)}</span>`;
     }).join('');
     const ghosts = (tg || []).map((t) => {
       const nb = view.nobles[t.noble];
       return `<button class="gmove" title="Move ${nb.kind} ${t.label} to ${sq}" data-h="${on(() => act(t.action))}"><span class="noble" style="--nc:${NOBLES[nb.kind].bg};color:${NOBLES[nb.kind].fg}">${icon(nb.kind)}</span>${tg.length > 1 || ui.noble === null ? '' : `<span class="d">${t.label}</span>`}</button>`;
     }).join('');
     const growBtn = grow[sq] ? `<button class="grow" style="--pc:${pColor(me())}" title="${esc(grow[sq].text)}" data-h="${on(() => act(grow[sq].action))}">+</button>` : '';
-    cells += `<div class="${cls}" style="grid-row:${r + 1};grid-column:${c + 1};${owner !== null ? `--pc:${pColor(owner)}` : ''}" title="${title}"><span class="num">${sq}</span>${nobles ? `<span class="nobles">${nobles}</span>` : ''}${ghosts ? `<span class="ghosts">${ghosts}</span>` : ''}${growBtn}</div>`;
+    cells += `<div class="${cls}" data-sq="${sq}" style="grid-row:${r + 1};grid-column:${c + 1};${owner !== null ? `--pc:${pColor(owner)}` : ''}" title="${title}"><span class="num">${sq}</span>${nobles ? `<span class="nobles">${nobles}</span>` : ''}${ghosts ? `<span class="ghosts">${ghosts}</span>` : ''}${growBtn}</div>`;
   }
   const inside = stage === null ? '' : `<div class="stage-wrap" style="grid-row:2/${h};grid-column:2/${w}">${stage}</div>`;
   return `<div class="ring" style="--s:${s}px;grid-template-columns:repeat(${w},${s}px);grid-template-rows:repeat(${h},${s}px)">${cells}${inside}</div>`;
@@ -374,8 +538,9 @@ function drawRing() {
 function stageHtml() {
   const cur = view.current_player;
   const pc = pColor(cur ?? me());
+  if (playback) return spectateStage();
   if (view.game_over) return `<div class="stage idle">${gameOverInner()}</div>`;
-  if (!view.human_to_act) {
+  if (!view.human_to_act && !view.replay) {
     return `<div class="stage idle"><div class="thinking"><span class="who-chip" style="--pc:${pc}">${pName(cur)}</span><span class="dots"><i></i><i></i><i></i></span></div></div>`;
   }
   const ph = phaseName(view.phase);
@@ -433,15 +598,18 @@ function acquiringStage(take) {
   const passInit = take('PassInitiative');
   const marketTile = (m, i, clickable) => {
     const content = m.length ? m.map((a) => tok(a)).join('') : '';
-    const cls = `mk ${m.length ? '' : 'empty'} ${(auction && auction.market === i) || ui.market === i ? 'on' : ''}`;
+    // During an auction only the market being bid on is highlighted.
+    const on_ = auction ? auction.market === i : ui.market === i;
+    const cls = `mk ${m.length ? '' : 'empty'} ${on_ ? 'on' : ''}`;
     return clickable
-      ? `<button class="${cls}" title="Market ${i + 1}" data-h="${on(() => { ui.market = i; drawRing(); })}">${content}</button>`
-      : `<div class="${cls}" title="Market ${i + 1}">${content}</div>`;
+      ? `<button class="${cls}" title="Market ${i + 1}" data-loc="m${i}" data-h="${on(() => { ui.market = i; drawRing(); })}">${content}</button>`
+      : `<div class="${cls}" title="Market ${i + 1}" data-loc="m${i}">${content}</div>`;
   };
   if (auction) {
     const amounts = bids.map((l) => body(l.action).amount).sort((a, b) => a - b);
     const bidders = auction.in_bidding.map((inb, i) => `<span class="who-chip ${inb ? '' : 'out'}" style="--pc:${pColor(i)}">${youOr(i)}</span>`).join('');
-    return `<div class="st-row">${marketTile(view.markets[auction.market], auction.market, false)}</div>
+    // Every market stays in view so bidders can weigh what else is on offer.
+    return `<div class="st-row">${view.markets.map((m, i) => marketTile(m, i, false)).join('')}</div>
       <div class="st-row"><span class="highbid" title="High bid">${icon('coins')}${auction.high_bid}</span><span class="who-chip" style="--pc:${pColor(auction.high_bidder)}">${youOr(auction.high_bidder)}</span></div>
       <div class="st-row">${bidders}</div>
       <div class="st-row">${amounts.length ? `${stepper('bid', amounts)}<button class="btn primary big" data-h="${on(() => act({ Bid: { amount: ui.bid.bid } }))}">Bid</button>` : ''}
@@ -574,7 +742,8 @@ function producingStage(take) {
   // Medals to spend on the event (each adds spectators).
   const medalValues = [...new Set(produce.map((l) => body(l.action).medals))].sort((a, b) => a - b);
   if (!medalValues.includes(ui.medals)) ui.medals = medalValues[0] ?? 0;
-  const cards = view.players[mine].programs.filter((p) => !p.produced).map((pr) => {
+  // Produced programs stay here: an event can be produced again.
+  const cards = view.players[mine].programs.map((pr) => {
     const ev = event(pr.id);
     const options = produce.filter((l) => body(l.action).program === pr.id);
     const l = options.find((x) => body(x.action).medals === ui.medals) || options[0];
@@ -632,12 +801,12 @@ function programRow(pr, owner) {
   const ev = event(pr.id);
   const p = view.players[owner];
   if (pr.produced) {
-    return `<div class="prow done" title="${esc(ev.name)} (produced)"><span class="pno sm">${ev.id}</span>${arenaIcon(ev)}<b>${esc(ev.name)}</b>${CHECK}</div>`;
+    return `<div class="prow done" data-prog="${pr.id}" title="${esc(ev.name)} (produced)"><span class="pno sm">${ev.id}</span>${arenaIcon(ev)}<b>${esc(ev.name)}</b>${CHECK}</div>`;
   }
   const missing = missingFor(ev, p.assets);
   const cur = missing <= ev.penalty_scores.length ? missing : null;
   const small = p.arena.len < rules().arena.squares_required_by_event_size[ev.size];
-  return `<div class="prow detail" title="${esc(ev.name)}">
+  return `<div class="prow detail" data-prog="${pr.id}" title="${esc(ev.name)}">
     <div class="pr1"><span class="pno sm">${ev.id}</span><span class="${small ? 'too-small' : ''}" title="${small ? 'Arena too small' : ''}">${arenaIcon(ev)}</span><b>${esc(ev.name)}</b>${falloff(ev, cur, true)}</div>
     ${needRow(ev, p.assets, 'xs')}</div>`;
 }
@@ -649,11 +818,11 @@ function anytimeButtons() {
 }
 function mySeat(i) {
   const p = view.players[i];
-  return `<div class="seat me ${view.current_player === i ? 'turn' : ''}" style="--pc:${pColor(i)}">
-    <div class="col-a"><div class="sh"><span class="dot"></span><b>${isHuman(i) ? 'You' : pName(i)}</b><span class="muted kind">${pName(i)}${view.start_player === i ? ' · starts' : ''}</span><span class="spacer"></span><span class="best" title="Best event">${icon('spectators')}${p.best_score}</span></div>
-      <div class="sm"><span class="coins" title="Coins">${icon('coins')}${p.coins}</span><span class="ex">${extras(p)}</span><span>arena ${p.arena.len}</span><span class="spacer"></span>${anytimeButtons()}</div>
+  return `<div class="seat me ${view.current_player === i ? 'turn' : ''} ${acted(i)}" style="--pc:${pColor(i)}" data-seat="${i}">
+    <div class="col-a"><div class="sh"><span class="dot"></span><b>${isHuman(i) ? 'You' : pName(i)}</b><span class="muted kind">${pName(i)}${view.start_player === i ? ' · starts' : ''}</span><span class="spacer"></span><span class="best" title="Best event" data-best="${i}">${icon('spectators')}${p.best_score}</span></div>
+      <div class="sm"><span class="coins" title="Coins" data-coins="${i}">${icon('coins')}${p.coins}</span><span class="ex">${extras(p)}</span><span>arena ${p.arena.len}</span><span class="spacer"></span>${anytimeButtons()}</div>
       ${seatToks(i, 'sm')}</div>
-    <div class="col-b">${[...p.programs].sort((a, b) => a.produced - b.produced).map((pr) => programRow(pr, i)).join('')}</div></div>`;
+    <div class="col-b">${isHuman(i) ? '' : lastMoveLine(i)}${[...p.programs].sort((a, b) => a.produced - b.produced).map((pr) => programRow(pr, i)).join('')}</div></div>`;
 }
 function oppSeat(i) {
   const p = view.players[i];
@@ -661,11 +830,11 @@ function oppSeat(i) {
   const offer = ph === 'Trading' ? phaseBody(view.phase).offer : null;
   const partner = (ui.trade && ui.trade.to === i) || (offer && (offer.from === i || offer.to === i));
   const pickable = ui.trade && !ui.trade.counter;
-  const pills = p.programs.map((pr) => { const ev = event(pr.id); return `<span class="ppill ${pr.produced ? 'done' : ''}" title="${ev.id} · ${esc(ev.name)}"><span class="pno xs">${ev.id}</span>${pr.produced ? CHECK : arenaIcon(ev)}</span>`; }).join('');
-  return `<div class="seat opp ${view.current_player === i ? 'turn' : ''} ${partner ? 'partner' : ''}" style="--pc:${pColor(i)}" ${pickable ? `data-h="${on(() => { ui.trade = { ...ui.trade, to: i, receive: {}, receiveCoins: 0 }; render(); })}"` : ''}>
-    <div class="sh"><span class="dot"></span><b>${pName(i)}</b><span class="muted kind">${SEAT_LABEL[view.seats[i]]}${view.start_player === i ? ' · starts' : ''}</span><span class="spacer"></span><span class="best" title="Best event">${icon('spectators')}${p.best_score}</span></div>
-    <div class="sm"><span class="coins" title="Coins">${icon('coins')}${p.coins}</span><span class="ex">${extras(p)}</span><span class="spacer"></span><span class="ppills">${pills}</span></div>
-    ${seatToks(i, 'xs')}
+  const pills = p.programs.map((pr) => { const ev = event(pr.id); return `<span class="ppill ${pr.produced ? 'done' : ''}" data-prog="${pr.id}" title="${ev.id} · ${esc(ev.name)}"><span class="pno xs">${ev.id}</span>${pr.produced ? CHECK : arenaIcon(ev)}</span>`; }).join('');
+  return `<div class="seat opp ${view.current_player === i ? 'turn' : ''} ${partner ? 'partner' : ''} ${acted(i)}" style="--pc:${pColor(i)}" data-seat="${i}" ${pickable ? `data-h="${on(() => { ui.trade = { ...ui.trade, to: i, receive: {}, receiveCoins: 0 }; render(); })}"` : ''}>
+    <div class="sh"><span class="dot"></span><b>${pName(i)}</b><span class="muted kind">${SEAT_LABEL[view.seats[i]]}${view.start_player === i ? ' · starts' : ''}</span><span class="spacer"></span><span class="best" title="Best event" data-best="${i}">${icon('spectators')}${p.best_score}</span></div>
+    <div class="sm"><span class="coins" title="Coins" data-coins="${i}">${icon('coins')}${p.coins}</span><span class="ex">${extras(p)}</span><span class="spacer"></span><span class="ppills">${pills}</span></div>
+    ${seatToks(i, 'xs')}${lastMoveLine(i)}
     <div class="pop">${[...p.programs].sort((a, b) => a.produced - b.produced).map((pr) => programRow(pr, i)).join('')}</div></div>`;
 }
 function bench() {
@@ -703,11 +872,348 @@ function logDrawer() {
 }
 
 function newGame() {
+  replaySeq++;
+  stopPlayback();
+  lastMoves = {};
   view = null;
   showLog = false;
   showPrograms = false;
   history.replaceState(null, '', location.pathname);
   render();
+}
+
+// ---------- playback: each move the server applied, one at a time ----------
+// A response to an action carries a `trail`: one frame per action applied
+// (the human's own, then every bot move up to the next human decision), each
+// with the events it caused and the state after it. The page shows the frames
+// in turn with a caption and animations, then the final view.
+function setSpeed(s) {
+  speed = s in SPEEDS ? s : 'normal';
+  try { localStorage.setItem('colosseum.speed', speed); } catch { /* storage blocked */ }
+  if (speed === 'off') skipPlayback();
+  else if (playback) drawRing();
+}
+function stopPlayback() {
+  playSeq++;
+  if (playback) {
+    const wake = playback.wake;
+    playback = null;
+    if (wake) wake();
+  }
+}
+function skipPlayback() {
+  if (!playback) return;
+  playback.skipped = true;
+  if (playback.wake) playback.wake();
+}
+function pause(ms) {
+  return new Promise((resolve) => {
+    const t = setTimeout(resolve, ms);
+    playback.wake = () => { clearTimeout(t); resolve(); };
+  });
+}
+const evKinds = (f) => f.events.map(kind);
+const SLOW_EVENTS = ['TradeProposed', 'TradeAccepted', 'AuctionWon', 'EventProduced', 'PhaseStarted', 'RoundStarted', 'GameOver'];
+function frameTime(f) {
+  let t = SPEEDS[speed];
+  if (isHuman(f.actor)) t *= 0.55; // you know what you did; just show it land
+  if (evKinds(f).some((k) => SLOW_EVENTS.includes(k))) t *= 1.35;
+  return t;
+}
+// "P2 bid 9" about P2 -> "bid 9".
+const stripActor = (text, i) => (text.startsWith(`${pName(i)} `) ? text.slice(pName(i).length + 1) : text);
+const moveLines = (f, log) => log.slice(f.log_from, f.log_to).filter((e) => e.kind === 'event').map((e) => e.text);
+function noteMove(f, log) {
+  const own = moveLines(f, log).find((t) => t.startsWith(`${pName(f.actor)} `));
+  lastMoves[f.actor] = own ? stripActor(own, f.actor) : f.action;
+}
+
+async function playTrail(next, logBefore) {
+  const frames = next.trail || [];
+  delete next.trail;
+  stopPlayback();
+  const seq = playSeq;
+  if (!frames.length || speed === 'off' || document.hidden) {
+    frames.forEach((f) => noteMove(f, next.log));
+    view = next;
+    render();
+    if (speed === 'off') {
+      const fresh = view.log.slice(logBefore).filter((e) => e.kind === 'event').map((e) => e.text);
+      if (fresh.length) toast(fresh.length > 4 ? [...fresh.slice(0, 3), `…and ${fresh.length - 3} more (log: L)`] : fresh);
+    }
+    return;
+  }
+  for (let i = 0; i < frames.length; i++) {
+    const f = frames[i];
+    const prevOffer = view && phaseName(view.phase) === 'Trading' ? phaseBody(view.phase).offer : null;
+    playback = { frame: f, i, total: frames.length, prevOffer, skipped: false, wake: null };
+    noteMove(f, next.log);
+    showFrame({
+      ...f.state, id: next.id, log: next.log.slice(0, f.log_to), legal: [], human_to_act: false, can_propose: false, can_counter: false,
+    }, f);
+    await pause(frameTime(f));
+    if (seq !== playSeq) return;
+    if (playback.skipped) {
+      frames.slice(i + 1).forEach((g) => noteMove(g, next.log));
+      break;
+    }
+  }
+  playback = null;
+  view = next;
+  render();
+}
+
+function showFrame(next, f) {
+  const prev = view;
+  const snap = prev && !reduceMotion ? snapshot() : null;
+  view = next;
+  render();
+  if (snap) animateFrame(prev, f, snap);
+}
+
+// Where every token and noble is on screen now, to animate from after a redraw.
+function snapshot() {
+  const toks = {};
+  document.querySelectorAll('[data-loc]').forEach((loc) => {
+    const m = (toks[loc.dataset.loc] = {});
+    loc.querySelectorAll('.tok[data-a]').forEach((t) => (m[t.dataset.a] ||= []).push({ rect: t.getBoundingClientRect(), html: t.outerHTML }));
+  });
+  return { toks };
+}
+
+// Events that change a seat's tickets, loge, medals or podiums.
+const EXTRAS_EVENTS = ['SeasonTicketBought', 'LogeBuilt', 'PodiumAwarded', 'EmperorTokenConverted', 'MedalExchangedForCoins', 'SpecialEventExchanged', 'ExtraInvestment'];
+function animateFrame(prev, f, snap) {
+  const dur = Math.max(350, Math.min(900, frameTime(f) * 0.7));
+  const used = {};
+  const won = new Set();
+  const marks = [];
+  const at = (sel) => document.querySelector(sel);
+  for (const e of f.events) {
+    const k = kind(e);
+    const b = body(e);
+    if (k === 'NobleMoved') slideNoble(prev, b, dur);
+    else if (k === 'AuctionWon') { won.add(b.market); b.assets.forEach((a) => fly(snap, `m${b.market}`, `p${b.player}`, a, dur, used)); }
+    else if (k === 'TradeAccepted') {
+      for (const [a, c] of Object.entries(b.terms.give)) for (let j = 0; j < c; j++) fly(snap, `p${b.from}`, `p${b.to}`, a, dur, used);
+      for (const [a, c] of Object.entries(b.terms.receive)) for (let j = 0; j < c; j++) fly(snap, `p${b.to}`, `p${b.from}`, a, dur, used);
+    } else if (k === 'AssetDonated') fly(snap, `p${b.from}`, `p${b.to}`, b.asset, dur, used);
+    else if (k === 'AssetDiscarded') fly(snap, `p${b.player}`, null, b.asset, dur, used);
+    else if (k === 'MarketsRefilled') popMarkets(prev, won);
+    else if (k === 'DiceRolled') document.querySelectorAll('.bigdie').forEach(roll);
+    else if (k === 'ArenaExpanded') pop(at(`.ring .sq[data-sq="${b.square}"]`));
+    else if (k === 'ProgramBought') pop(at(`[data-seat="${b.player}"] [data-prog="${b.program}"]`));
+    else if (k === 'EventProduced') bubble(at(`[data-best="${b.player}"]`), `${icon('spectators')}${b.spectators}`, 'score');
+    else if (k === 'StarAwardChanged' && b.to !== null) pop(at(`[data-seat="${b.to}"] .starcol[title^="${b.asset}"]`));
+    else if (k === 'RoundStarted') marks.unshift(`Round ${b.round}`);
+    else if (k === 'PhaseStarted') marks.push(b.phase);
+    else if (k === 'GameOver') marks.push('Game over');
+    else if (EXTRAS_EVENTS.includes(k)) pop(at(`[data-seat="${b.player}"] .ex`));
+  }
+  view.players.forEach((p, i) => {
+    const d = p.coins - (prev.players[i] ? prev.players[i].coins : p.coins);
+    if (d) bubble(at(`[data-coins="${i}"]`), `${d > 0 ? '+' : '−'}${Math.abs(d)}${icon('coins')}`, d > 0 ? 'gain' : 'loss');
+  });
+  if (marks.length) banner(marks);
+}
+
+// A token leaves `from` (as drawn before the redraw) and lands in `to` (as
+// drawn now); with no `to` it fades away. `used` hands out a different tile
+// each time the same kind of token moves between the same places.
+function fly(snap, from, to, asset, dur, used) {
+  const src = (snap.toks[from] && snap.toks[from][asset]) || [];
+  const sk = `${from}|${asset}`;
+  used[sk] = (used[sk] || 0) + 1;
+  const s = src[src.length - used[sk]];
+  let t = null;
+  if (to !== null) {
+    const list = [...document.querySelectorAll(`[data-loc="${to}"] .tok[data-a="${asset}"]`)];
+    const tk = `>${to}|${asset}`;
+    used[tk] = (used[tk] || 0) + 1;
+    t = list[list.length - used[tk]] || null;
+  }
+  if (!s) { pop(t); return; }
+  const g = ghost(s);
+  const done = () => g.remove();
+  if (!t) {
+    g.animate([{ opacity: 1 }, { opacity: 0, transform: 'translateY(-22px) scale(.6)' }], { duration: dur, easing: 'ease-in', fill: 'forwards' }).finished.then(done, done);
+    return;
+  }
+  const r = t.getBoundingClientRect();
+  const dx = r.left - s.rect.left;
+  const dy = r.top - s.rect.top;
+  const sc = r.width / s.rect.width;
+  const lift = Math.min(70, Math.hypot(dx, dy) * 0.25);
+  g.animate([
+    { transform: 'translate(0,0) scale(1)' },
+    { transform: `translate(${dx / 2}px,${dy / 2 - lift}px) scale(${((1 + sc) / 2) * 1.3})`, offset: 0.5 },
+    { transform: `translate(${dx}px,${dy}px) scale(${sc})` },
+  ], { duration: dur, easing: 'ease-in-out', fill: 'forwards' }).finished.then(done, done);
+  t.animate([{ opacity: 0 }, { opacity: 0 }], { duration: dur });
+}
+function ghost(s) {
+  const g = document.createElement('div');
+  g.className = 'fly-tok';
+  g.style.cssText = `left:${s.rect.left}px;top:${s.rect.top}px;--tok:${s.rect.width}px`;
+  g.innerHTML = s.html;
+  document.body.appendChild(g);
+  return g;
+}
+// Market tokens that weren't there before (a won market counts as empty).
+function popMarkets(prev, won) {
+  view.markets.forEach((m, i) => {
+    const left = countList(won.has(i) ? [] : prev.markets[i] || []);
+    let j = 0;
+    document.querySelectorAll(`[data-loc="m${i}"] .tok`).forEach((t) => {
+      const a = t.dataset.a;
+      if (left[a] > 0) left[a] -= 1;
+      else pop(t, 90 * j++);
+    });
+  });
+}
+// A noble walks square by square to where it now stands.
+function slideNoble(prev, b, dur) {
+  const N = boardSize();
+  const i = view.nobles.findIndex((nb, j) => nb.kind === b.kind && nb.position === b.to && prev.nobles[j] && prev.nobles[j].position === b.from);
+  const el = i < 0 ? null : document.querySelector(`.ring [data-noble="${i}"]`);
+  if (!el) return;
+  const center = (sq) => {
+    const r = document.querySelector(`.ring .sq[data-sq="${sq}"]`).getBoundingClientRect();
+    return [r.left + r.width / 2, r.top + r.height / 2];
+  };
+  let d = ((b.to - b.from) % N + N) % N;
+  let dir = 1;
+  if (d > N / 2) { d = N - d; dir = -1; }
+  if (!d) return;
+  const [ex, ey] = center(b.to);
+  const kf = [];
+  for (let k = 0; k <= d; k++) {
+    const [x, y] = center(((b.from + dir * k) % N + N) % N);
+    kf.push({ transform: `translate(${x - ex}px,${y - ey}px) scale(${k === 0 || k === d ? 1 : 1.15})` });
+  }
+  if (el.parentElement) el.parentElement.style.zIndex = 5;
+  el.animate(kf, { duration: Math.min(dur * 1.3, 150 * d + 280), easing: 'ease-in-out' });
+}
+function pop(el, delay = 0) {
+  if (!el) return;
+  el.animate([
+    { transform: 'scale(.3)', opacity: 0 },
+    { transform: 'scale(1.18)', opacity: 1, offset: 0.65 },
+    { transform: 'scale(1)', opacity: 1 },
+  ], { duration: 480, delay, easing: 'ease-out', fill: 'backwards' });
+}
+function roll(el) {
+  el.animate([
+    { transform: 'rotate(-220deg) scale(.5)', opacity: 0.2 },
+    { transform: 'rotate(16deg) scale(1.08)', opacity: 1, offset: 0.7 },
+    { transform: 'none', opacity: 1 },
+  ], { duration: 650, easing: 'ease-out' });
+}
+// A floating "+3 coins" (or score) over an element.
+function bubble(el, html, cls) {
+  if (!el) return;
+  const r = el.getBoundingClientRect();
+  const b = document.createElement('div');
+  b.className = `bubble ${cls}`;
+  b.innerHTML = html;
+  b.style.left = `${r.left + r.width / 2}px`;
+  b.style.top = `${r.top - 4}px`;
+  document.body.appendChild(b);
+  const done = () => b.remove();
+  b.animate([
+    { transform: 'translate(-50%,-30%) scale(.6)', opacity: 0 },
+    { transform: 'translate(-50%,-100%) scale(1)', opacity: 1, offset: 0.15 },
+    { transform: 'translate(-50%,-100%) scale(1)', opacity: 1, offset: 0.7 },
+    { transform: 'translate(-50%,-190%) scale(1)', opacity: 0 },
+  ], { duration: 1700, easing: 'ease-out', fill: 'forwards' }).finished.then(done, done);
+}
+// "Round 3 / Investing" across the board when a round or phase starts.
+function banner(marks) {
+  const ring = document.getElementById('ring');
+  if (!ring) return;
+  const r = ring.getBoundingClientRect();
+  const el = document.createElement('div');
+  el.className = 'banner';
+  el.innerHTML = `${esc(marks[0])}${marks.length > 1 ? `<small>${esc(marks.slice(1).join(' · '))}</small>` : ''}`;
+  el.style.left = `${r.left + r.width / 2}px`;
+  el.style.top = `${r.top + r.height * 0.22}px`;
+  document.body.appendChild(el);
+  const done = () => el.remove();
+  el.animate([
+    { opacity: 0, transform: 'translate(-50%,-50%) scale(.8)' },
+    { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.15 },
+    { opacity: 1, transform: 'translate(-50%,-50%) scale(1)', offset: 0.75 },
+    { opacity: 0, transform: 'translate(-50%,-50%) scale(1.05)' },
+  ], { duration: 1600, fill: 'forwards' }).finished.then(done, done);
+}
+
+// The stage while a move plays: who did what, plus the part of the board it
+// is about (markets, the offer on the table, dice, the podium).
+function spectateStage() {
+  const { frame: f, i, total } = playback;
+  const pc = pColor(f.actor);
+  const name = `${pName(f.actor)} `;
+  const lines = moveLines(f, view.log);
+  const own = lines.filter((t) => t.startsWith(name)).map((t) => stripActor(t, f.actor));
+  const others = lines.filter((t) => !t.startsWith(name));
+  const caption = `<div class="caption"><span class="who-chip" style="--pc:${pc}">${youOr(f.actor)}</span><div class="lines">${
+    (own.length ? own : [f.action]).map((t) => `<div class="main">${esc(t)}</div>`).join('')}${others.map((t) => `<div class="aside">${esc(t)}</div>`).join('')}</div></div>`;
+  const foot = `<div class="pb-foot"><span class="muted">Move ${i + 1} of ${total}</span><span class="speeds">${['slow', 'normal', 'fast'].map((k) =>
+    `<button class="${speed === k ? 'on' : ''}" data-h="${on(() => setSpeed(k))}">${SPEED_LABEL[k]}</button>`).join('')}</span><button class="btn small" title="Jump to the end of the bots' moves" data-h="${on(skipPlayback)}">Skip <kbd>Space</kbd></button></div>`;
+  return `<div class="stage spectate" style="--pc:${pc}">${caption}${spectateScene(f)}${foot}</div>`;
+}
+function spectateScene(f) {
+  const ks = evKinds(f);
+  const ph = phaseName(view.phase);
+  const none = (...kinds) => legalOf(...kinds); // nothing is legal while watching
+  const find = (k) => f.events.find((e) => kind(e) === k);
+  if (find('ProgramBought')) {
+    const b = body(find('ProgramBought'));
+    const ev = event(b.program);
+    return `<div class="showcase"><span class="pno">${b.program}</span>${ev ? arenaIcon(ev) : ''}<b>${esc(b.name)}</b><span class="price">${icon('coins')}${b.cost}</span></div>`;
+  }
+  if (find('EventProduced')) {
+    const b = body(find('EventProduced'));
+    return `<div class="showcase"><span class="pno">${b.program}</span><b>${esc(b.name)}</b><span class="bigscore">${icon('spectators')}${b.spectators}</span>${b.new_best ? '<span class="stamp yes">New best</span>' : ''}</div>`;
+  }
+  if (ks.includes('AuctionWon') || (ph === 'Acquiring' && !ks.includes('PhaseStarted'))) return acquiringStage(none);
+  if (ks.includes('TradeAccepted') || ks.includes('TradeRejected') || ph === 'Trading') return tradeScene(f);
+  if (ph === 'Producing') return diceScene();
+  if (ph === 'Closing') return closingStage(none);
+  return '';
+}
+function tradeScene(f) {
+  const acc = f.events.find((e) => kind(e) === 'TradeAccepted');
+  const offer = phaseName(view.phase) === 'Trading' ? phaseBody(view.phase).offer : null;
+  let o = null;
+  let stamp = '';
+  if (acc) {
+    o = body(acc);
+    stamp = '<span class="stamp yes">Accepted</span>';
+  } else if (f.events.some((e) => kind(e) === 'TradeRejected') && playback.prevOffer) {
+    o = playback.prevOffer;
+    stamp = '<span class="stamp no">Rejected</span>';
+  } else if (offer) {
+    o = offer;
+    stamp = `<span class="stamp wait">${youOr(offer.to)} to answer</span>`;
+  }
+  if (!o) return '';
+  const t = o.terms;
+  return `<div class="deal big">${flow(o.from, o.to, t.give, t.give_coins)}${flow(o.to, o.from, t.receive, t.receive_coins)}</div>${stamp}`;
+}
+function diceScene() {
+  const ph = phaseBody(view.phase);
+  if (!ph.rolled) return '';
+  return `<div class="dicepair">${ph.dice.map((face, i) => {
+    const txt = roman(face);
+    return `<span class="bigdie ${ph.used[i] ? 'used' : ''}"><span class="roman ${txt.length > 3 ? 'long' : ''}">${txt}</span></span>`;
+  }).join('')}</div>`;
+}
+const acted = (i) => (playback && playback.frame.actor === i ? 'acted' : '');
+function lastMoveLine(i) {
+  const t = lastMoves[i];
+  if (!t) return '';
+  return `<div class="lastmove ${acted(i) ? 'fresh' : ''}" title="${esc(t)}">${esc(t)}</div>`;
 }
 
 // ---------- top level ----------
@@ -723,10 +1229,12 @@ function render() {
   // Seat clicks only pick a trade partner while building a fresh offer.
   if (ui.trade && (phaseName(view.phase) !== 'Trading' || !view.human_to_act)) ui.trade = null;
   ensureTrade();
-  $app.innerHTML = `<div class="app">${topBar()}<div class="ring-area" id="ring"></div>${bench()}</div>
+  $app.innerHTML = `<div class="app ${view.replay ? 'replaying' : ''}">${topBar()}${view.replay ? replayBar() : ''}<div class="ring-area" id="ring"></div>${bench()}</div>
     ${showPrograms ? programsModal() : ''}${showLog ? logDrawer() : ''}`;
   const ring = document.getElementById('ring');
-  let last = '';
+  const r0 = ring.getBoundingClientRect();
+  // Start from the drawn size so the first observation doesn't redraw (and cut off animations).
+  let last = `${Math.round(r0.width)}x${Math.round(r0.height)}`;
   ringObserver = new ResizeObserver(() => {
     const r = ring.getBoundingClientRect();
     const key = `${Math.round(r.width)}x${Math.round(r.height)}`;
@@ -739,13 +1247,23 @@ function render() {
 }
 
 document.addEventListener('click', (e) => {
+  // The game menu closes on any click that isn't its own toggle.
+  const menu = document.querySelector('details.gamemenu[open]');
+  if (menu && !e.target.closest('details.gamemenu > summary')) menu.open = false;
   const el = e.target.closest('[data-h], [data-stop]');
   if (!el || el.hasAttribute('data-stop')) return;
   const fn = handlers[Number(el.dataset.h)];
   if (fn) fn();
 });
 
+document.addEventListener('input', (e) => {
+  if (e.target.id === 'replay-range') document.getElementById('replay-label').textContent = `Move ${e.target.value} / ${view.replay.total}`;
+});
+
 document.addEventListener('change', (e) => {
+  if (e.target.id === 'replay-range') { gotoStep(Number(e.target.value)); return; }
+  if (e.target.id === 'speed') { setSpeed(e.target.value); return; }
+  if (e.target.id === 'loadfile') { if (e.target.files[0]) loadSaveFile(e.target.files[0]); return; }
   const el = e.target.closest('select.seat-kind');
   if (!el) return;
   setup.seats[Number(el.dataset.seat)] = el.value;
@@ -755,7 +1273,18 @@ document.addEventListener('change', (e) => {
 document.addEventListener('keydown', (e) => {
   if (!view || e.target.matches('input, select, textarea') || e.ctrlKey || e.metaKey || e.altKey) return;
   const k = e.key.toLowerCase();
-  if (k === 'p') { showPrograms = !showPrograms; render(); }
+  if (playback && (e.key === ' ' || e.key === 'Escape' || e.key === 'Enter')) { e.preventDefault(); skipPlayback(); return; }
+  if (view.replay && !showPrograms && !showLog) {
+    const r = view.replay;
+    if (e.key === 'ArrowLeft') { e.preventDefault(); if (e.shiftKey) phaseJump(-1); else if (r.step > 0) gotoStep(r.step - 1); return; }
+    if (e.key === 'ArrowRight') { e.preventDefault(); if (e.shiftKey) phaseJump(1); else if (r.step < r.total) gotoStep(r.step + 1); return; }
+    if (e.key === 'Home') { gotoStep(0); return; }
+    if (e.key === 'End') { gotoStep(r.total); return; }
+    if (e.key === 'Escape') { exitReplay(); return; }
+  }
+  if (k === 'r') { if (view.replay) exitReplay(); else if (view.history_len) enterReplay(); }
+  else if (k === 'u') { if (canUndo()) undo(); }
+  else if (k === 'p') { showPrograms = !showPrograms; render(); }
   else if (k === 'l') toggleLog();
   else if (e.key === 'Escape' && (showPrograms || showLog || ui.noble !== null || ui.medal)) {
     if (showLog) logSeen = view.log.length;

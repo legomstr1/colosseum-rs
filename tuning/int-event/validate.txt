@@ -1,0 +1,18 @@
+trades accepted: 64059 (10.68/game), with money: 393 (avg 6.7 coins)
+   win%    ±se  place   score   field  variant
+ 26.13%  1.13%  0.504   80.29   80.42  house
+ 38.67%  1.26%  0.643   84.95   79.77  core
+ 47.00%  1.29%  0.703   86.53   78.84  t1
+ 32.13%  1.21%  0.572   81.65   79.29  ie
+trades accepted: 30030 (5.00/game), with money: 4778 (avg 6.3 coins)
+   win%    ±se  place   score   field  variant
+ 34.13%  1.22%  0.587   73.24   70.00  house
+ 47.67%  1.29%  0.718   78.01   69.93  core
+ 56.27%  1.28%  0.767   79.68   69.50  t1
+ 34.93%  1.23%  0.590   73.11   69.91  ie
+trades accepted: 44547 (7.42/game), with money: 33989 (avg 4.5 coins)
+   win%    ±se  place   score   field  variant
+ 70.33%  1.18%  0.863   77.88   59.23  house
+ 83.87%  0.95%  0.936   82.85   58.84  core
+ 88.67%  0.82%  0.955   85.36   58.60  t1
+ 74.53%  1.12%  0.889   78.30   59.02  ie

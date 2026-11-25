@@ -1,0 +1,21 @@
+  20 / 320 games (198s)
+  40 / 320 games (329s)
+  60 / 320 games (457s)
+  80 / 320 games (587s)
+  100 / 320 games (726s)
+  120 / 320 games (876s)
+  140 / 320 games (1010s)
+  160 / 320 games (1129s)
+  180 / 320 games (1241s)
+  200 / 320 games (1356s)
+  220 / 320 games (1472s)
+  240 / 320 games (1607s)
+  260 / 320 games (1715s)
+  280 / 320 games (1831s)
+  300 / 320 games (1940s)
+  320 / 320 games (2039s)
+160 games x 2 variants, sizes [4], field ["search"], 1 seat(s), 2039s
+trades accepted: 5313 (16.60/game), with money: 183 (avg 6.5 coins)
+   win%    ±se  place   score   field  variant
+ 26.88%  3.50%  0.588   81.42   76.90  core
+  8.12%  2.16%  0.327   74.23   80.75  house

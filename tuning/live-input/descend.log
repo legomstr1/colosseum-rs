@@ -1,0 +1,6 @@
+[01:56] seed 68950 current 35.45% place 0.614 | min_offer_gain=0.6:36.52 big_batch_gain=11.2:35.60 commit_round=3:35.50 mid_buy_gain=4.0:35.45 top_events=7:35.35 coin_short=0.7:35.33 big_batch_gain=5.7143:35.27 coin_short=0.3571:34.83 min_offer_gain=1.4:34.77 top_events=9:34.30 commit_round=1:34.27
+  ACCEPT min_offer_gain=0.6 (36.52% vs 35.45%)
+[02:06] seed 72950 current 35.00% place 0.611 | side_weight=1.0:35.77 offers_per_turn=8:35.35 spare_weight=0.3846:35.23 big_batch_premium=0:34.88 partner_gain=0.5:34.88 spare_weight=0.65:34.70 joker_premium=11:34.70 side_weight=0.64:34.48 big_batch_premium=4:34.23 joker_premium=5:34.12 offers_per_turn=4:33.42
+  ACCEPT side_weight=1.0 (35.77% vs 35.00%)
+[02:14] seed 76950 current 36.00% place 0.618 | uncommitted_weight=0.3:36.40 final_bid_mult=2.0:36.10 final_open_gain=4.5:36.00 open_gain=0.75:36.00 open_gain=0.25:36.00 coin_margin=18.0:35.98 coin_margin=8.0:35.98 final_bid_mult=4.5:35.98 fill_per_round=0.2:35.95 fill_per_round=0.6:35.93 uncommitted_weight=0.7:35.77 final_open_gain=1.5:34.75
+[02:21] seed 80950 current 37.20% place 0.627 | accept_gain=1.4:37.40 coin_rich=0.128:37.23 coin_rich=0.05:37.23 dice_medal_weight=333.3333:37.20 dice_medal_weight=30.0:37.20 rival_take=0.2:37.15 accept_gain=0.6:36.95 rival_take=0.6:36.88

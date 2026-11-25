@@ -1,0 +1,25 @@
+[package]
+name = "colosseum-bot-live-input"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Colosseum bot: the house plan, tuned by sweeps, plus money trades and Monte Carlo search"
+
+[dependencies]
+colosseum-engine.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+colosseum-bot-house = { path = "../house" }
+colosseum-bot-oracle = { path = "../oracle" }
+colosseum-bot-maestro = { path = "../maestro" }
+colosseum-bot-chameleon = { path = "../chameleon" }
+
+[dev-dependencies]
+colosseum-bot-search = { path = "../search" }
+colosseum-bot-trader = { path = "../trader" }
+colosseum-bot-planner = { path = "../planner" }
+colosseum-bot-showman = { path = "../showman" }
+colosseum-bot-auctioneer = { path = "../auctioneer" }
+colosseum-bot-tuned-1 = { path = "../tuned-1" }
+colosseum-bot-tuned-2 = { path = "../tuned-2" }
+colosseum-bot-int-event = { path = "../int-event" }

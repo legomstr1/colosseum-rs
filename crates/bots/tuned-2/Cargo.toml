@@ -1,0 +1,14 @@
+[package]
+name = "colosseum-bot-tuned-2"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Colosseum bot: tuned-1 with podium play and a wider tuning search"
+
+[dependencies]
+colosseum-engine.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+
+[dev-dependencies]
+colosseum-bot-house = { path = "../house" }

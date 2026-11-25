@@ -1,0 +1,8 @@
+1000 games x 5 variants, sizes [4], field ["trader", "planner", "showman", "auctioneer"], 1 seat(s), 9s
+trades accepted: 36729 (7.35/game), with money: 29356 (avg 4.6 coins)
+   win%    ±se  place   score   field  variant
+ 86.40%  1.08%  0.944   83.04   58.58  core
+ 83.70%  1.17%  0.936   82.20   58.93  t1
+ 81.50%  1.23%  0.924   81.42   58.55  t1{offers_per_partner=1}
+ 82.10%  1.21%  0.924   81.86   58.93  t1{offers_per_turn=3,money_offers_per_turn=1}
+ 85.60%  1.11%  0.942   82.69   58.81  t1{offers_per_partner=3}

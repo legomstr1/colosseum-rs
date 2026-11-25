@@ -1,0 +1,1 @@
+reserve_final_auction=false,spare_weight=0.5,open_gain=0.5,top_events=8,side_weight=1.0,offers_per_turn=6,fill_per_round=0.4,min_offer_gain=0.6

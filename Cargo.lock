@@ -193,6 +193,37 @@ dependencies = [
 ]
 
 [[package]]
+name = "colosseum-bot-int-event"
+version = "0.1.0"
+dependencies = [
+ "colosseum-bot-house",
+ "colosseum-engine",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "colosseum-bot-live-input"
+version = "0.1.0"
+dependencies = [
+ "colosseum-bot-auctioneer",
+ "colosseum-bot-chameleon",
+ "colosseum-bot-house",
+ "colosseum-bot-int-event",
+ "colosseum-bot-maestro",
+ "colosseum-bot-oracle",
+ "colosseum-bot-planner",
+ "colosseum-bot-search",
+ "colosseum-bot-showman",
+ "colosseum-bot-trader",
+ "colosseum-bot-tuned-1",
+ "colosseum-bot-tuned-2",
+ "colosseum-engine",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "colosseum-bot-maestro"
 version = "0.1.0"
 dependencies = [
@@ -254,6 +285,26 @@ dependencies = [
 ]
 
 [[package]]
+name = "colosseum-bot-tuned-1"
+version = "0.1.0"
+dependencies = [
+ "colosseum-bot-house",
+ "colosseum-engine",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "colosseum-bot-tuned-2"
+version = "0.1.0"
+dependencies = [
+ "colosseum-bot-house",
+ "colosseum-engine",
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "colosseum-cli"
 version = "0.1.0"
 dependencies = [
@@ -278,6 +329,8 @@ dependencies = [
  "colosseum-bot-auctioneer",
  "colosseum-bot-chameleon",
  "colosseum-bot-house",
+ "colosseum-bot-int-event",
+ "colosseum-bot-live-input",
  "colosseum-bot-maestro",
  "colosseum-bot-oracle",
  "colosseum-bot-planner",
@@ -285,6 +338,8 @@ dependencies = [
  "colosseum-bot-search",
  "colosseum-bot-showman",
  "colosseum-bot-trader",
+ "colosseum-bot-tuned-1",
+ "colosseum-bot-tuned-2",
  "colosseum-engine",
  "serde_json",
 ]
@@ -312,6 +367,8 @@ dependencies = [
  "colosseum-bot-auctioneer",
  "colosseum-bot-chameleon",
  "colosseum-bot-house",
+ "colosseum-bot-int-event",
+ "colosseum-bot-live-input",
  "colosseum-bot-maestro",
  "colosseum-bot-oracle",
  "colosseum-bot-planner",
@@ -319,6 +376,8 @@ dependencies = [
  "colosseum-bot-search",
  "colosseum-bot-showman",
  "colosseum-bot-trader",
+ "colosseum-bot-tuned-1",
+ "colosseum-bot-tuned-2",
  "colosseum-engine",
  "serde",
  "serde_json",

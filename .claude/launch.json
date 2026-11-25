@@ -14,6 +14,12 @@
       "port": 8081
     },
     {
+      "name": "colosseum-web-8082",
+      "runtimeExecutable": "cargo",
+      "runtimeArgs": ["run", "--release", "--target-dir", "target/web-8082", "-p", "colosseum-web", "--", "--port", "8082"],
+      "port": 8082
+    },
+    {
       "name": "mockups",
       "runtimeExecutable": "python",
       "runtimeArgs": ["-m", "http.server", "8090", "--bind", "127.0.0.1", "--directory", "crates/colosseum-web"],

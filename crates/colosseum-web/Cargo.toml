@@ -17,6 +17,10 @@ serde_json.workspace = true
 axum = "0.8"
 colosseum-bot-search = { path = "../bots/search" }
 colosseum-bot-house = { path = "../bots/house" }
+colosseum-bot-live-input = { path = "../bots/live-input" }
+colosseum-bot-tuned-1 = { path = "../bots/tuned-1" }
+colosseum-bot-tuned-2 = { path = "../bots/tuned-2" }
+colosseum-bot-int-event = { path = "../bots/int-event" }
 colosseum-bot-oracle = { path = "../bots/oracle" }
 colosseum-bot-maestro = { path = "../bots/maestro" }
 colosseum-bot-chameleon = { path = "../bots/chameleon" }

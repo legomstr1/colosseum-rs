@@ -1,0 +1,1748 @@
+{
+"seats": [
+"human",
+"human",
+"live-input",
+"live-input"
+],
+"seed": 1795370345232775000,
+"history": [
+"BuildLoge",
+"BuildLoge",
+"BuildLoge",
+"BuildLoge",
+{
+"StartAuction": {
+"market": 2,
+"bid": 8
+}
+},
+"PassBid",
+"PassBid",
+"PassBid",
+{
+"StartAuction": {
+"market": 1,
+"bid": 8
+}
+},
+"PassBid",
+"PassBid",
+{
+"StartAuction": {
+"market": 2,
+"bid": 8
+}
+},
+"PassBid",
+{
+"StartAuction": {
+"market": 2,
+"bid": 8
+}
+},
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Ship": 1
+},
+"give_coins": 0,
+"receive": {
+"Decoration": 1
+},
+"receive_coins": 0
+}
+}
+},
+"AcceptTrade",
+"EndTrading",
+{
+"ProposeTrade": {
+"to": 3,
+"terms": {
+"give": {
+"Horse": 3
+},
+"give_coins": 0,
+"receive": {
+"Ship": 3
+},
+"receive_coins": 5
+}
+}
+},
+"RejectTrade",
+"EndTrading",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Comedian": 1
+},
+"give_coins": 0,
+"receive": {
+"Cage": 1
+},
+"receive_coins": 15
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Comedian": 1
+},
+"give_coins": 0,
+"receive": {
+"Cage": 1
+},
+"receive_coins": 12
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 3,
+"terms": {
+"give": {
+"Ship": 1
+},
+"give_coins": 0,
+"receive": {
+"Lion": 1
+},
+"receive_coins": 0
+}
+}
+},
+"AcceptTrade",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Comedian": 1
+},
+"give_coins": 0,
+"receive": {
+"Cage": 1
+},
+"receive_coins": 0
+}
+}
+},
+"AcceptTrade",
+"EndTrading",
+{
+"ProposeTrade": {
+"to": 0,
+"terms": {
+"give": {
+"Chariot": 1
+},
+"give_coins": 0,
+"receive": {
+"Gladiator": 1
+},
+"receive_coins": 9
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 0,
+"terms": {
+"give": {
+"Chariot": 1
+},
+"give_coins": 0,
+"receive": {
+"Gladiator": 1
+},
+"receive_coins": 6
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 0,
+"terms": {
+"give": {
+"Chariot": 1
+},
+"give_coins": 0,
+"receive": {
+"Gladiator": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Chariot": 1
+},
+"give_coins": 0,
+"receive": {
+"Horse": 1
+},
+"receive_coins": 0
+}
+}
+},
+{
+"CounterTrade": {
+"terms": {
+"give": {
+"Horse": 1
+},
+"give_coins": 0,
+"receive": {
+"Chariot": 1
+},
+"receive_coins": 7
+}
+}
+},
+{
+"CounterTrade": {
+"terms": {
+"give": {
+"Chariot": 1
+},
+"give_coins": 4,
+"receive": {
+"Horse": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Chariot": 1
+},
+"give_coins": 0,
+"receive": {
+"Horse": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Chariot": 1
+},
+"give_coins": 0,
+"receive": {
+"Comedian": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Chariot": 1
+},
+"give_coins": 0,
+"receive": {
+"Torch": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Chariot": 1
+},
+"give_coins": 0,
+"receive": {
+"Gladiator": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+"EndTrading",
+{
+"MoveNobleCombined": {
+"noble": 0,
+"distance": 6
+}
+},
+{
+"ProduceEvent": {
+"program": 1,
+"medals": 0
+}
+},
+{
+"MoveNobleCombined": {
+"noble": 4,
+"distance": 4
+}
+},
+{
+"ProduceEvent": {
+"program": 8,
+"medals": 0
+}
+},
+{
+"MoveNoble": {
+"noble": 0,
+"die": 0,
+"distance": 6
+}
+},
+{
+"MoveNoble": {
+"noble": 1,
+"die": 1,
+"distance": 6
+}
+},
+{
+"ProduceEvent": {
+"program": 6,
+"medals": 0
+}
+},
+{
+"MoveNobleCombined": {
+"noble": 0,
+"distance": 7
+}
+},
+{
+"ProduceEvent": {
+"program": 10,
+"medals": 0
+}
+},
+{
+"DiscardAsset": {
+"asset": "Gladiator"
+}
+},
+{
+"DiscardAsset": {
+"asset": "Scenery"
+}
+},
+{
+"DiscardAsset": {
+"asset": "Cage"
+}
+},
+{
+"DiscardAsset": {
+"asset": "Gladiator"
+}
+},
+{
+"RequestAsset": {
+"asset": "Comedian"
+}
+},
+"BuySeasonTicket",
+"BuySeasonTicket",
+"EndInvesting",
+"BuySeasonTicket",
+"BuySeasonTicket",
+{
+"StartAuction": {
+"market": 0,
+"bid": 8
+}
+},
+"PassBid",
+"PassBid",
+"PassBid",
+{
+"StartAuction": {
+"market": 2,
+"bid": 8
+}
+},
+"PassBid",
+"PassBid",
+{
+"StartAuction": {
+"market": 4,
+"bid": 8
+}
+},
+"PassBid",
+{
+"StartAuction": {
+"market": 4,
+"bid": 8
+}
+},
+"EndTrading",
+{
+"ProposeTrade": {
+"to": 0,
+"terms": {
+"give": {
+"Decoration": 1
+},
+"give_coins": 0,
+"receive": {
+"Musician": 1
+},
+"receive_coins": 2
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 3,
+"terms": {
+"give": {
+"Gladiator": 1
+},
+"give_coins": 0,
+"receive": {
+"Chariot": 1
+},
+"receive_coins": 2
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 0,
+"terms": {
+"give": {
+"Decoration": 1
+},
+"give_coins": 0,
+"receive": {
+"Musician": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 3,
+"terms": {
+"give": {
+"Decoration": 1
+},
+"give_coins": 0,
+"receive": {
+"Chariot": 1
+},
+"receive_coins": 0
+}
+}
+},
+"AcceptTrade",
+{
+"ProposeTrade": {
+"to": 3,
+"terms": {
+"give": {
+"Gladiator": 1
+},
+"give_coins": 0,
+"receive": {
+"Musician": 1
+},
+"receive_coins": 0
+}
+}
+},
+"AcceptTrade",
+"EndTrading",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Gladiator": 1
+},
+"give_coins": 0,
+"receive": {
+"Horse": 1
+},
+"receive_coins": 0
+}
+}
+},
+{
+"CounterTrade": {
+"terms": {
+"give": {
+"Horse": 1
+},
+"give_coins": 0,
+"receive": {
+"Gladiator": 1,
+"Comedian": 1
+},
+"receive_coins": 4
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Gladiator": 1
+},
+"give_coins": 0,
+"receive": {
+"Torch": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Gladiator": 1
+},
+"give_coins": 2,
+"receive": {
+"Horse": 1
+},
+"receive_coins": 0
+}
+}
+},
+{
+"CounterTrade": {
+"terms": {
+"give": {
+"Horse": 1
+},
+"give_coins": 0,
+"receive": {
+"Gladiator": 1
+},
+"receive_coins": 4
+}
+}
+},
+{
+"CounterTrade": {
+"terms": {
+"give": {
+"Gladiator": 1
+},
+"give_coins": 2,
+"receive": {
+"Horse": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Decoration": 1
+},
+"give_coins": 0,
+"receive": {
+"Torch": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Gladiator": 1
+},
+"give_coins": 0,
+"receive": {
+"Torch": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Decoration": 1
+},
+"give_coins": 0,
+"receive": {
+"Torch": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Decoration": 1
+},
+"give_coins": 0,
+"receive": {
+"Horse": 1
+},
+"receive_coins": 0
+}
+}
+},
+"AcceptTrade",
+"EndTrading",
+"EndTrading",
+{
+"MoveNoble": {
+"noble": 2,
+"die": 0,
+"distance": 2
+}
+},
+{
+"MoveNoble": {
+"noble": 1,
+"die": 1,
+"distance": 3
+}
+},
+{
+"ProduceEvent": {
+"program": 2,
+"medals": 0
+}
+},
+{
+"MoveNoble": {
+"noble": 0,
+"die": 0,
+"distance": 2
+}
+},
+{
+"MoveNoble": {
+"noble": 4,
+"die": 1,
+"distance": 6
+}
+},
+{
+"ProduceEvent": {
+"program": 6,
+"medals": 0
+}
+},
+{
+"MoveNoble": {
+"noble": 0,
+"die": 0,
+"distance": 5
+}
+},
+{
+"MoveNoble": {
+"noble": 4,
+"die": 1,
+"distance": 6
+}
+},
+{
+"ProduceEvent": {
+"program": 4,
+"medals": 0
+}
+},
+{
+"MoveNobleCombined": {
+"noble": 3,
+"distance": 7
+}
+},
+{
+"ProduceEvent": {
+"program": 1,
+"medals": 0
+}
+},
+{
+"DiscardAsset": {
+"asset": "Decoration"
+}
+},
+{
+"DiscardAsset": {
+"asset": "Lion"
+}
+},
+{
+"DiscardAsset": {
+"asset": "Gladiator"
+}
+},
+{
+"DiscardAsset": {
+"asset": "Gladiator"
+}
+},
+{
+"RequestAsset": {
+"asset": "Torch"
+}
+},
+{
+"ExpandArena": {
+"side": "Right"
+}
+},
+"EndInvesting",
+{
+"ExpandArena": {
+"side": "Right"
+}
+},
+"EndInvesting",
+{
+"ExpandArena": {
+"side": "Right"
+}
+},
+"EndInvesting",
+{
+"ExpandArena": {
+"side": "Left"
+}
+},
+{
+"StartAuction": {
+"market": 3,
+"bid": 8
+}
+},
+"PassBid",
+"PassBid",
+"PassBid",
+{
+"StartAuction": {
+"market": 4,
+"bid": 8
+}
+},
+"PassBid",
+{
+"Bid": {
+"amount": 9
+}
+},
+"PassBid",
+{
+"StartAuction": {
+"market": 0,
+"bid": 8
+}
+},
+"PassBid",
+{
+"StartAuction": {
+"market": 1,
+"bid": 8
+}
+},
+{
+"ProposeTrade": {
+"to": 0,
+"terms": {
+"give": {
+"Gladiator": 1
+},
+"give_coins": 0,
+"receive": {
+"Musician": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Gladiator": 1
+},
+"give_coins": 0,
+"receive": {
+"Lion": 1
+},
+"receive_coins": 0
+}
+}
+},
+{
+"CounterTrade": {
+"terms": {
+"give": {
+"Lion": 1
+},
+"give_coins": 0,
+"receive": {
+"Gladiator": 1
+},
+"receive_coins": 2
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Cage": 1
+},
+"give_coins": 0,
+"receive": {
+"Comedian": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 3,
+"terms": {
+"give": {
+"Cage": 1
+},
+"give_coins": 0,
+"receive": {
+"Comedian": 1
+},
+"receive_coins": 0
+}
+}
+},
+"AcceptTrade",
+{
+"ProposeTrade": {
+"to": 0,
+"terms": {
+"give": {
+"Comedian": 1
+},
+"give_coins": 0,
+"receive": {
+"Musician": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 0,
+"terms": {
+"give": {
+"Comedian": 1
+},
+"give_coins": 2,
+"receive": {
+"Musician": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+"EndTrading",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Cage": 1
+},
+"give_coins": 0,
+"receive": {
+"Horse": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+"EndTrading",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Lion": 2
+},
+"give_coins": 0,
+"receive": {
+"Torch": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Lion": 2
+},
+"give_coins": 0,
+"receive": {
+"Scenery": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Lion": 2
+},
+"give_coins": 0,
+"receive": {
+"Comedian": 1
+},
+"receive_coins": 0
+}
+}
+},
+"AcceptTrade",
+"EndTrading",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Lion": 1
+},
+"give_coins": 0,
+"receive": {
+"Comedian": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Lion": 1
+},
+"give_coins": 0,
+"receive": {
+"Torch": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Lion": 1
+},
+"give_coins": 0,
+"receive": {
+"Musician": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Lion": 1
+},
+"give_coins": 0,
+"receive": {
+"Horse": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+"EndTrading",
+{
+"MoveNoble": {
+"noble": 0,
+"die": 0,
+"distance": 1
+}
+},
+{
+"MoveNoble": {
+"noble": 2,
+"die": 1,
+"distance": 5
+}
+},
+{
+"ProduceEvent": {
+"program": 3,
+"medals": 0
+}
+},
+{
+"MoveNoble": {
+"noble": 0,
+"die": 0,
+"distance": 3
+}
+},
+{
+"MoveNoble": {
+"noble": 1,
+"die": 1,
+"distance": 4
+}
+},
+{
+"ProduceEvent": {
+"program": 10,
+"medals": 0
+}
+},
+{
+"MoveNobleCombined": {
+"noble": 2,
+"distance": 11
+}
+},
+{
+"ProduceEvent": {
+"program": 9,
+"medals": 0
+}
+},
+{
+"MoveNobleCombined": {
+"noble": 1,
+"distance": 11
+}
+},
+{
+"ProduceEvent": {
+"program": 2,
+"medals": 0
+}
+},
+{
+"DiscardAsset": {
+"asset": "Scenery"
+}
+},
+{
+"DiscardAsset": {
+"asset": "Horse"
+}
+},
+{
+"DiscardAsset": {
+"asset": "Decoration"
+}
+},
+{
+"DiscardAsset": {
+"asset": "Decoration"
+}
+},
+{
+"RequestAsset": {
+"asset": "Scenery"
+}
+},
+{
+"ExpandArena": {
+"side": "Right"
+}
+},
+"PlaySpecialEvent",
+"BuySeasonTicket",
+"EndInvesting",
+{
+"ExpandArena": {
+"side": "Right"
+}
+},
+"EndInvesting",
+{
+"BuyProgram": {
+"program": 13
+}
+},
+"EndInvesting",
+{
+"ExpandArena": {
+"side": "Right"
+}
+},
+"EndInvesting",
+{
+"StartAuction": {
+"market": 1,
+"bid": 8
+}
+},
+"PassBid",
+"PassBid",
+{
+"Bid": {
+"amount": 9
+}
+},
+"PassBid",
+{
+"StartAuction": {
+"market": 0,
+"bid": 8
+}
+},
+"PassBid",
+"PassBid",
+{
+"StartAuction": {
+"market": 0,
+"bid": 8
+}
+},
+{
+"Bid": {
+"amount": 16
+}
+},
+"PassBid",
+{
+"StartAuction": {
+"market": 4,
+"bid": 8
+}
+},
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Cage": 1
+},
+"give_coins": 0,
+"receive": {
+"Horse": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Lion": 1
+},
+"give_coins": 0,
+"receive": {
+"Horse": 1
+},
+"receive_coins": 0
+}
+}
+},
+"AcceptTrade",
+{
+"ProposeTrade": {
+"to": 0,
+"terms": {
+"give": {
+"Cage": 1
+},
+"give_coins": 0,
+"receive": {
+"Decoration": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 0,
+"terms": {
+"give": {
+"Cage": 1
+},
+"give_coins": 0,
+"receive": {
+"Gladiator": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Cage": 1
+},
+"give_coins": 0,
+"receive": {
+"Gladiator": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Lion": 1
+},
+"give_coins": 0,
+"receive": {
+"Horse": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+"EndTrading",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Gladiator": 2
+},
+"give_coins": 0,
+"receive": {
+"Comedian": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 3,
+"terms": {
+"give": {
+"Gladiator": 2
+},
+"give_coins": 0,
+"receive": {
+"Comedian": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+"EndTrading",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Torch": 1,
+"Lion": 1
+},
+"give_coins": 0,
+"receive": {
+"Chariot": 2
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+"EndTrading",
+{
+"ProposeTrade": {
+"to": 0,
+"terms": {
+"give": {
+"Lion": 1
+},
+"give_coins": 0,
+"receive": {
+"Musician": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 0,
+"terms": {
+"give": {
+"Gladiator": 1
+},
+"give_coins": 0,
+"receive": {
+"Musician": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+"EndTrading",
+{
+"MoveNoble": {
+"noble": 0,
+"die": 0,
+"distance": 3
+}
+},
+{
+"MoveNoble": {
+"noble": 2,
+"die": 1,
+"distance": 5
+}
+},
+{
+"ProduceEvent": {
+"program": 10,
+"medals": 0
+}
+},
+{
+"MoveNoble": {
+"noble": 1,
+"die": 0,
+"distance": 6
+}
+},
+{
+"MoveNoble": {
+"noble": 0,
+"die": 1,
+"distance": 3
+}
+},
+{
+"ProduceEvent": {
+"program": 9,
+"medals": 0
+}
+},
+{
+"MoveNoble": {
+"noble": 4,
+"die": 1,
+"distance": 6
+}
+},
+{
+"MoveNoble": {
+"noble": 3,
+"die": 0,
+"distance": 5
+}
+},
+{
+"ProduceEvent": {
+"program": 13,
+"medals": 0
+}
+},
+{
+"MoveNobleCombined": {
+"noble": 2,
+"distance": 7
+}
+},
+{
+"ProduceEvent": {
+"program": 6,
+"medals": 0
+}
+},
+{
+"DiscardAsset": {
+"asset": "Horse"
+}
+},
+{
+"DiscardAsset": {
+"asset": "Decoration"
+}
+},
+{
+"DiscardAsset": {
+"asset": "Horse"
+}
+},
+{
+"DiscardAsset": {
+"asset": "Lion"
+}
+},
+{
+"RequestAsset": {
+"asset": "Decoration"
+}
+},
+{
+"BuyProgram": {
+"program": 28
+}
+},
+"EndInvesting",
+{
+"BuyProgram": {
+"program": 20
+}
+},
+"EndInvesting",
+{
+"BuyProgram": {
+"program": 26
+}
+},
+"EndInvesting",
+{
+"BuyProgram": {
+"program": 24
+}
+},
+"EndInvesting",
+"ExchangeMedalForCoins",
+{
+"StartAuction": {
+"market": 1,
+"bid": 10
+}
+},
+"PassBid",
+"PassBid",
+{
+"Bid": {
+"amount": 11
+}
+},
+"ExchangeMedalForCoins",
+{
+"Bid": {
+"amount": 12
+}
+},
+"PassBid",
+{
+"StartAuction": {
+"market": 2,
+"bid": 8
+}
+},
+"PassBid",
+"PassBid",
+"ExchangeMedalForCoins",
+{
+"StartAuction": {
+"market": 1,
+"bid": 8
+}
+},
+{
+"Bid": {
+"amount": 9
+}
+},
+"PassBid",
+"PassInitiative",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Joker": 1
+},
+"give_coins": 0,
+"receive": {
+"Comedian": 1
+},
+"receive_coins": 0
+}
+}
+},
+"AcceptTrade",
+"EndTrading",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Musician": 1
+},
+"give_coins": 0,
+"receive": {
+"Horse": 2
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 3,
+"terms": {
+"give": {
+"Musician": 1
+},
+"give_coins": 0,
+"receive": {
+"Chariot": 1
+},
+"receive_coins": 0
+}
+}
+},
+"AcceptTrade",
+"EndTrading",
+{
+"ProposeTrade": {
+"to": 1,
+"terms": {
+"give": {
+"Lion": 2
+},
+"give_coins": 0,
+"receive": {
+"Joker": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 3,
+"terms": {
+"give": {
+"Cage": 1
+},
+"give_coins": 0,
+"receive": {
+"Musician": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+{
+"ProposeTrade": {
+"to": 3,
+"terms": {
+"give": {
+"Lion": 1
+},
+"give_coins": 0,
+"receive": {
+"Musician": 1
+},
+"receive_coins": 0
+}
+}
+},
+"AcceptTrade",
+"EndTrading",
+{
+"ProposeTrade": {
+"to": 2,
+"terms": {
+"give": {
+"Cage": 1
+},
+"give_coins": 0,
+"receive": {
+"Decoration": 1
+},
+"receive_coins": 0
+}
+}
+},
+"RejectTrade",
+"EndTrading",
+{
+"MoveNoble": {
+"noble": 0,
+"die": 0,
+"distance": 4
+}
+},
+{
+"MoveNoble": {
+"noble": 1,
+"die": 1,
+"distance": 5
+}
+},
+{
+"ProduceEvent": {
+"program": 28,
+"medals": 3
+}
+},
+{
+"MoveNobleCombined": {
+"noble": 2,
+"distance": 7
+}
+},
+{
+"MedalMoveNoble": {
+"noble": 4,
+"delta": 1
+}
+},
+"ExchangeSpecialEventForMedal",
+{
+"ProduceEvent": {
+"program": 20,
+"medals": 3
+}
+},
+{
+"MoveNoble": {
+"noble": 0,
+"die": 0,
+"distance": 2
+}
+},
+{
+"MoveNoble": {
+"noble": 1,
+"die": 1,
+"distance": 4
+}
+},
+{
+"ProduceEvent": {
+"program": 26,
+"medals": 5
+}
+},
+{
+"MoveNoble": {
+"noble": 1,
+"die": 0,
+"distance": 3
+}
+},
+{
+"MoveNoble": {
+"noble": 3,
+"die": 1,
+"distance": 1
+}
+},
+{
+"ProduceEvent": {
+"program": 24,
+"medals": 6
+}
+}
+]
+}

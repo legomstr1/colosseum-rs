@@ -1,0 +1,8 @@
+2000 games x 5 variants, sizes [3, 4, 5], field ["house", "oracle", "maestro", "chameleon"], 1 seat(s), 47s
+trades accepted: 50547 (5.05/game), with money: 7523 (avg 6.1 coins)
+   win%    ±se  place   score   field  variant
+ 52.05%  1.12%  0.740   78.56   70.12  core
+ 49.20%  1.12%  0.722   78.16   70.07  t1
+ 48.00%  1.12%  0.710   77.37   69.95  t1{offers_per_partner=1}
+ 48.50%  1.12%  0.713   77.63   70.00  t1{offers_per_turn=3,money_offers_per_turn=1}
+ 50.00%  1.12%  0.727   78.36   70.13  t1{offers_per_partner=3}

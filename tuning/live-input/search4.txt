@@ -1,0 +1,24 @@
+  20 / 360 games (0s)
+  40 / 360 games (0s)
+  60 / 360 games (0s)
+  80 / 360 games (0s)
+  100 / 360 games (0s)
+  120 / 360 games (0s)
+  140 / 360 games (213s)
+  160 / 360 games (401s)
+  180 / 360 games (566s)
+  200 / 360 games (737s)
+  220 / 360 games (910s)
+  240 / 360 games (1100s)
+  260 / 360 games (1333s)
+  280 / 360 games (1536s)
+  300 / 360 games (1735s)
+  320 / 360 games (1905s)
+  340 / 360 games (2043s)
+  360 / 360 games (2195s)
+120 games x 3 variants, sizes [4], field ["trader", "planner", "showman", "auctioneer"], 1 seat(s), 2195s
+trades accepted: 2935 (8.15/game), with money: 2275 (avg 4.7 coins)
+   win%    ±se  place   score   field  variant
+ 87.50%  3.02%  0.956   83.30   58.82  core
+ 90.83%  2.63%  0.961   83.09   58.15  li{s.rollout=mixed}
+ 76.67%  3.86%  0.864   78.97   58.14  li{s.budget=96}

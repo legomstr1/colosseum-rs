@@ -1,0 +1,25 @@
+  20 / 400 games (0s)
+  40 / 400 games (0s)
+  60 / 400 games (0s)
+  80 / 400 games (0s)
+  100 / 400 games (0s)
+  120 / 400 games (1s)
+  140 / 400 games (1s)
+  160 / 400 games (1s)
+  180 / 400 games (1s)
+  200 / 400 games (1s)
+  220 / 400 games (176s)
+  240 / 400 games (370s)
+  260 / 400 games (506s)
+  280 / 400 games (632s)
+  300 / 400 games (771s)
+  320 / 400 games (917s)
+  340 / 400 games (1053s)
+  360 / 400 games (1198s)
+  380 / 400 games (1339s)
+  400 / 400 games (1497s)
+200 games x 2 variants, sizes [3, 4, 5], field ["house", "oracle", "maestro", "chameleon"], 1 seat(s), 1497s
+trades accepted: 2703 (6.76/game), with money: 756 (avg 3.8 coins)
+   win%    ±se  place   score   field  variant
+ 48.00%  3.53%  0.720   78.39   70.63  core
+ 31.00%  3.27%  0.460   69.11   71.23  li{s.budget=96}

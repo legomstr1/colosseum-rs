@@ -1,0 +1,24 @@
+  20 / 360 games (0s)
+  40 / 360 games (0s)
+  60 / 360 games (0s)
+  80 / 360 games (0s)
+  100 / 360 games (1s)
+  120 / 360 games (1s)
+  140 / 360 games (23s)
+  160 / 360 games (39s)
+  180 / 360 games (59s)
+  200 / 360 games (76s)
+  220 / 360 games (95s)
+  240 / 360 games (114s)
+  260 / 360 games (438s)
+  280 / 360 games (743s)
+  300 / 360 games (1008s)
+  320 / 360 games (1332s)
+  340 / 360 games (1623s)
+  360 / 360 games (1902s)
+120 games x 3 variants, sizes [4], field ["house", "oracle", "maestro", "chameleon"], 1 seat(s), 1902s
+trades accepted: 2266 (6.29/game), with money: 667 (avg 4.0 coins)
+   win%    ±se  place   score   field  variant
+ 52.50%  4.56%  0.747   78.91   70.17  core
+ 48.33%  4.56%  0.697   75.95   69.21  li{s.phases=I}
+ 25.83%  4.00%  0.436   67.15   70.86  li{s.budget=96}

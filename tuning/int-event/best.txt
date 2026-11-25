@@ -1,0 +1,1 @@
+mid_cost_weight=0.8,fill_per_round=0.2,side_weight=0.8,spare_weight=0.3846,commit_round=1,mid_weight=0.7

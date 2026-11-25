@@ -15,7 +15,7 @@ use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 
-const ALL_BOTS: &[&str] = &["planner", "auctioneer", "trader", "rollout", "showman", "oracle", "chameleon", "maestro", "house", "search", "oracle-tuned", "greedy", "random"];
+const ALL_BOTS: &[&str] = &["planner", "auctioneer", "trader", "rollout", "showman", "oracle", "chameleon", "maestro", "house", "search", "live-input", "live-input-core", "tuned-1", "tuned-2", "int-event", "oracle-tuned", "greedy", "random"];
 
 fn make_bot(name: &str, seed: u64) -> Option<Box<dyn Agent>> {
     Some(match name {
@@ -26,6 +26,11 @@ fn make_bot(name: &str, seed: u64) -> Option<Box<dyn Agent>> {
         "showman" => Box::new(colosseum_bot_showman::ShowmanAgent::new(seed)),
         "oracle" => Box::new(colosseum_bot_oracle::OracleAgent::new(seed)),
         "search" => Box::new(colosseum_bot_search::SearchAgent::new(seed)),
+        "live-input" => Box::new(colosseum_bot_live_input::LiveInputAgent::new(seed)),
+        "live-input-core" => Box::new(colosseum_bot_live_input::CoreAgent::new(seed)),
+        "tuned-1" => Box::new(colosseum_bot_tuned_1::Tuned1Agent::new(seed)),
+        "tuned-2" => Box::new(colosseum_bot_tuned_2::Tuned2Agent::new(seed)),
+        "int-event" => Box::new(colosseum_bot_int_event::IntEventAgent::new(seed)),
         // Variants: search-<base>-<rollout>-<budget>[-wide], e.g. search-house-house-200-wide.
         s if s.starts_with("search-") => {
             let p: Vec<&str> = s.split('-').collect();
