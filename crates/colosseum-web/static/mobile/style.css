@@ -33,8 +33,12 @@ a.btn { text-decoration: none; color: var(--ink); }
 .sq { border-radius: 6px; }
 .sq .num { left: 3px; top: 1px; font-size: 8px; }
 .sq.rest::after { border-width: 3px; }
-.noble { border-radius: 6px; width: 70%; }
-.nobles .noble + .noble { width: 46%; }
+/* Nobles sit centred in their square: one large, two side by side, three or
+   four in a 2x2 grid. The square number hides under them. */
+.nobles { align-self: stretch; align-content: center; justify-content: center; gap: 2px; padding: 1px; }
+.noble { border-radius: 6px; width: 68%; }
+.nobles .noble:not(:only-child) { width: calc(50% - 2px); border-radius: 5px; }
+.sq:has(.nobles) .num { display: none; }
 .gmove .d { right: 2px; top: 0; font-size: 9px; }
 .grow { inset: 2px; font-size: 22px; border-radius: 6px; }
 .stage-wrap { padding: 4px; }
