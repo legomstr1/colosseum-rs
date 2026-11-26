@@ -66,6 +66,7 @@ The workspace uses Rust edition 2024 and depends on `serde` and `serde_yml`, plu
   - The board takes clicks: noble moves (pick a die, click a noble, click a faded noble on a dashed square) and arena expansion (the `+` squares). Dice show Roman numerals. Trading is a table between two hands: click tokens across, set coins, Offer / Counter.
   - Below 900px wide the stage moves under the ring and the bench stacks.
   - Every human seat plays from the same browser for now; seats in `Session` are where remote players would attach.
+- **Online play (planned)**: see `docs/ONLINE.md` for the Cloudflare design (engine and bots in WebAssembly in the browser, one Durable Object per game relaying moves over WebSockets, finished games stored in D1, shared-password gate) at impresario.arc5.io.
 - **The legal-action contract**: `legal_actions()` lists every legal move except open-ended trade offers (`ProposeTrade`, `CounterTrade`), which `check()`/`is_legal()` validate. Actions available at any time (exchanging a medal for coins, or a SpecialEvent token for a medal) are added for whichever player is to act.
 - **Determinism**: `Game` records `history`, and `Game::replay(config, n, seed, &history)` rebuilds the state exactly. Tests check this and the serde round-trip.
 - **Tests**: `crates/colosseum-engine/tests/engine.rs` plays 120 full bot games and checks invariants after every action: standard tokens are conserved, the medal supply is never exceeded, and podiums are conserved.
