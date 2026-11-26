@@ -1,0 +1,23 @@
+# Online play (docs/ONLINE.md). Build the page first:
+#   crates/colosseum-wasm/build.sh        # writes dist/ at the repo root
+#   cd crates/colosseum-worker && npx wrangler dev
+name = "colosseum"
+main = "build/index.js"
+compatibility_date = "2026-11-01"
+
+[build]
+command = "worker-build --release"
+
+# The page and the WebAssembly engine. Asset requests are free and never
+# run the Worker.
+[assets]
+directory = "../../dist"
+
+[[durable_objects.bindings]]
+name = "GAMES"
+class_name = "GameRoom"
+
+# The free plan only allows SQLite-backed Durable Objects.
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["GameRoom"]

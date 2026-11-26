@@ -19,7 +19,7 @@ if command -v wasm-opt >/dev/null; then
 fi
 
 static=crates/colosseum-web/static
-cp "$static/app.js" "$static/icons.js" "$static/style.css" crates/colosseum-wasm/web/local.js "$out/"
+cp "$static/app.js" "$static/icons.js" "$static/style.css" crates/colosseum-wasm/web/local.js crates/colosseum-wasm/web/online.js "$out/"
 # Load the WebAssembly API before app.js boots; app.js waits on colosseumReady.
 sed 's#  <script src="/icons.js"></script>#  <script>window.colosseumReady = import("./local.js").then((m) => m.start());</script>\n&#' \
   "$static/index.html" > "$out/index.html"

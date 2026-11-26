@@ -78,7 +78,8 @@ const kind = (a) => (typeof a === 'string' ? a : Object.keys(a)[0]);
 const body = (a) => (typeof a === 'string' ? {} : a[kind(a)]);
 const phaseName = (p) => (typeof p === 'string' ? p : Object.keys(p)[0]);
 const phaseBody = (p) => (typeof p === 'string' ? {} : p[phaseName(p)]);
-const pName = (i) => `P${i + 1}`;
+// Online games carry player names; otherwise seats are P1, P2...
+const pName = (i) => (view && view.online && view.online.names[i]) || `P${i + 1}`;
 const pColor = (i) => `var(--p${i % 5})`;
 const rules = () => config.rules;
 const boardSize = () => rules().board.size;
@@ -89,6 +90,7 @@ const n = () => view.players.length;
 
 // The seat the screen is drawn for: the human to act, else the first human.
 function me() {
+  if (view.online && !view.replay) return view.online.me ?? 0;
   if ((view.human_to_act || view.replay) && view.current_player !== null) return view.current_player;
   const h = view.seats.indexOf('human');
   return h >= 0 ? h : 0;
@@ -197,7 +199,9 @@ async function act(action) {
     const next = await api(`/api/games/${view.id}/actions`, { action });
     ui = freshUi();
     showPrograms = false;
-    await playTrail(next, before);
+    // Online, the move comes back from the server through colosseumPush.
+    if (next) await playTrail(next, before);
+    else render();
   } catch (e) {
     toast(e.message);
   }
@@ -223,10 +227,94 @@ function renderSetup() {
           <button class="btn small" ${setup.seats.length <= min ? 'disabled' : ''} data-h="${on(() => { setup.seats.pop(); render(); })}">Remove player</button>
         </div></div>
       <div class="row"><input class="input" id="seed" placeholder="Seed (optional)" value="${esc(setup.seed)}" style="width:170px">
-        <span class="spacer"></span><button class="btn big" data-h="${on(pickSaveFile)}">Load game</button><button class="btn primary big" data-h="${on(startGame)}">Start game</button></div>
+        <span class="spacer"></span><button class="btn big" data-h="${on(pickSaveFile)}">Load game</button>${window.colosseumCanHost ? `<button class="btn big" data-h="${on(createOnline)}" title="Play with friends in other browsers: Human seats are for people, the rest are bots">Create online game</button>` : ''}<button class="btn primary big" data-h="${on(startGame)}">Start game</button></div>
       <div class="hint">Icons by Lorc, Delapouite and Cathelineau from <a href="https://game-icons.net" target="_blank" rel="noopener">game-icons.net</a>, under <a href="https://creativecommons.org/licenses/by/3.0/" target="_blank" rel="noopener">CC BY 3.0</a>.</div>
     </div>`;
 }
+
+// ---------- online play (see crates/colosseum-wasm/web/online.js) ----------
+async function createOnline() {
+  try {
+    const res = await fetch('/api/online/games', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seats: setup.seats }),
+    });
+    const json = await res.json();
+    if (!res.ok) throw new Error(json.error || res.statusText);
+    location.href = `${location.pathname}?g=${json.code}`;
+  } catch (e) {
+    toast(e.message === 'Failed to fetch' ? "Couldn't reach the game server" : e.message);
+  }
+}
+
+const inviteLink = () => `${location.origin}${location.pathname}?g=${window.colosseumOnline.code}`;
+
+async function copyInvite() {
+  try { await navigator.clipboard.writeText(inviteLink()); toast('Invite link copied'); } catch { toast(inviteLink()); }
+}
+
+function leaveOnline() {
+  location.href = location.pathname;
+}
+
+// Before this browser has a seat: pick one, or watch.
+function renderJoin() {
+  const o = window.colosseumOnline;
+  if (o.state === 'missing') {
+    return `<div class="setup"><h1>Colosseum</h1><div class="card">There's no game ${esc(o.code)}. Check the link, or <a href="${location.pathname}">start a new game</a>.</div></div>`;
+  }
+  if (o.state !== 'join') {
+    return `<div class="setup"><h1>Colosseum</h1><div class="muted">Connecting to game ${esc(o.code)}…</div></div>`;
+  }
+  let name = '';
+  try { name = localStorage.getItem('colosseum.name') || ''; } catch { /* storage off */ }
+  const rows = o.seats.map((kind, i) => {
+    const taken = o.names[i];
+    let right;
+    if (kind !== 'human') right = `<span class="muted">${SEAT_LABEL[kind] || kind} bot</span>`;
+    else if (taken) right = `<span class="muted">${esc(taken)}${o.connected[i] ? '' : ' (away)'}</span>`;
+    else right = `<button class="btn small primary" data-h="${on(() => o.join(i, document.getElementById('pname').value))}">Sit here</button>`;
+    return `<div class="seat-row"><span class="dot" style="--pc:${pColor(i)}"></span><b style="width:28px">P${i + 1}</b><span class="spacer"></span>${right}</div>`;
+  }).join('');
+  return `
+    <div class="setup">
+      <h1>Colosseum</h1>
+      <div class="muted">Online game <b>${esc(o.code)}</b>. Pick an open seat to play.</div>
+      <div class="card"><h3>Your name</h3><input class="input" id="pname" maxlength="24" placeholder="Name" value="${esc(name)}"></div>
+      <div class="card"><h3>Seats</h3><div style="display:flex;flex-direction:column;gap:10px">${rows}</div></div>
+      <div class="row"><button class="btn big" data-h="${on(copyInvite)}">Copy invite link</button><span class="spacer"></span>
+        <button class="btn big" data-h="${on(() => o.watch())}">Just watch</button></div>
+    </div>`;
+}
+
+// Hooks for online.js: show a game, play moves as they arrive, small updates.
+window.colosseumShow = (next) => {
+  stopPlayback();
+  view = next;
+  if (view) logSeen = view.log.length;
+  render();
+};
+const pushQueue = [];
+let pushing = false;
+window.colosseumPush = async (next) => {
+  pushQueue.push(next);
+  if (pushing) return;
+  pushing = true;
+  try {
+    while (pushQueue.length) {
+      const n = pushQueue.shift();
+      // Leave a step-through alone; the newest move shows when it ends.
+      if (view && view.replay) { pushQueue.length = 0; break; }
+      await playTrail(n, view ? view.log.length : 0);
+    }
+  } finally {
+    pushing = false;
+  }
+};
+window.colosseumPatch = (fn) => {
+  if (view) fn(view);
+  if (!playback) render();
+};
+window.colosseumToast = (msg) => toast(msg);
 
 async function startGame() {
   setup.seed = document.getElementById('seed').value.trim();
@@ -266,13 +354,14 @@ function topBar() {
       <button class="btn small" ${view.history_len ? `data-h="${on(enterReplay)}"` : 'disabled'} title="Step through the game so far (R)">Replay</button>`}
       <details class="gamemenu"><summary class="btn small" title="Seed ${view.seed}">Game ▾</summary><div class="menu">
         <button class="btn small ghost" data-h="${on(saveGame)}" title="Download this game as a file">Save to file</button>
-        <button class="btn small ghost" data-h="${on(pickSaveFile)}" title="Open a saved game file">Load from file</button>
-        <button class="btn small ghost" data-h="${on(newGame)}">New game</button>
+        ${view.online ? `<button class="btn small ghost" data-h="${on(copyInvite)}">Copy invite link</button>
+        <button class="btn small ghost" data-h="${on(leaveOnline)}">Leave game</button>` : `<button class="btn small ghost" data-h="${on(pickSaveFile)}" title="Open a saved game file">Load from file</button>
+        <button class="btn small ghost" data-h="${on(newGame)}">New game</button>`}
         <label class="speedpick" title="How moves are played back">Animations <select class="input" id="speed">${Object.keys(SPEEDS).map((k) => `<option value="${k}" ${k === speed ? 'selected' : ''}>${SPEED_LABEL[k]}</option>`).join('')}</select></label></div></details></span></div>`;
 }
 
 // ---------- save, load, undo, step through ----------
-const canUndo = () => !view.replay && view.history_len > 0 && view.seats.includes('human');
+const canUndo = () => !view.replay && !view.online && view.history_len > 0 && view.seats.includes('human');
 
 async function saveGame() {
   try {
@@ -1232,7 +1321,7 @@ function render() {
   if (ringObserver) { ringObserver.disconnect(); ringObserver = null; }
   if (!view) {
     document.body.classList.remove('playing');
-    $app.innerHTML = renderSetup();
+    $app.innerHTML = window.colosseumOnline ? renderJoin() : renderSetup();
     return;
   }
   document.body.classList.add('playing');
@@ -1314,6 +1403,7 @@ document.addEventListener('keydown', (e) => {
     if (kinds.length) seatKinds = kinds;
   } catch { /* older server: offer every kind */ }
   setup.seats = setup.seats.map((k) => (seatKinds.includes(k) ? k : defaultBot()));
+  if (window.colosseumOnline) { render(); window.colosseumOnline.start(); return; }
   const id = location.hash.slice(1);
   if (id) {
     try { view = await api(`/api/games/${id}`); logSeen = view.log.length; } catch { view = null; }

@@ -21,6 +21,15 @@ export async function start() {
     const r = local.request(method, path, body === undefined ? '' : JSON.stringify(body));
     return { status: r.status, json: JSON.parse(r.body) };
   };
+  // Served by the Worker (crates/colosseum-worker), which can host online
+  // games. On another static server the button just reports an error.
+  window.colosseumCanHost = true;
+  const code = new URLSearchParams(location.search).get('g');
+  if (code) {
+    const { startOnline } = await import('./online.js');
+    window.colosseumLocal = startOnline(code.trim().toUpperCase(), call);
+    return;
+  }
   window.colosseumLocal = (method, path, body) => {
     let r = call(method, path, body);
     // A game from before a reload: rebuild it from localStorage, same id.

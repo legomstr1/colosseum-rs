@@ -82,6 +82,19 @@ pub struct Session {
     pub seats: Vec<SeatKind>,
     bots: Vec<Option<Bot>>,
     pub log: Vec<LogEntry>,
+    /// Set for a game played over the network, seen from one browser.
+    pub online: Option<Online>,
+}
+
+/// An online game as one browser sees it. Moves come from the server, so
+/// the session never runs bots on its own; the browser on bot duty asks
+/// [`Session::bot_action`] and sends the result like any other move.
+#[derive(Clone, Debug, Default, Serialize)]
+pub struct Online {
+    /// This browser's seat; `None` for a spectator.
+    pub me: Option<usize>,
+    /// Player names by seat (empty for bots and open seats).
+    pub names: Vec<String>,
 }
 
 fn make_bots(factory: BotFactory, seats: &[SeatKind], seed: u64) -> Vec<Option<Bot>> {
@@ -111,6 +124,7 @@ impl Session {
             bots: make_bots(factory, &seats, seed),
             seats,
             log: vec![new_game_entry(seed)],
+            online: None,
         };
         for (i, a) in history.iter().enumerate() {
             let events = s
@@ -169,6 +183,29 @@ impl Session {
             frames.push(self.step(action).expect("bots only pick legal actions"));
         }
         frames
+    }
+
+    /// The move the bot in the seat to act would make, without applying
+    /// it. `None` when the game is over or a human is to act.
+    pub fn bot_action(&mut self) -> Option<Action> {
+        let p = self.game.current_player()?;
+        let bot = self.bots[p.0].as_mut()?;
+        let legal = self.game.legal_actions();
+        Some(bot.choose_action(&self.game, &legal))
+    }
+
+    /// The page's view of this session (`id` is echoed back to the page).
+    pub fn view_json(&self, id: &str) -> Value {
+        serde_json::to_value(view_with(id, self, None)).expect("views serialize")
+    }
+
+    /// Applies a move and returns the view after it with a one-frame
+    /// `trail`, for the page to animate.
+    pub fn apply_json(&mut self, id: &str, action: Action) -> Result<Value, String> {
+        let frame = self.step(action)?;
+        let mut v = view_with(id, self, None);
+        v.trail = vec![frame];
+        serde_json::to_value(v).map_err(|e| e.to_string())
     }
 
     pub fn saved(&self) -> SavedGame {
@@ -234,6 +271,9 @@ pub struct View<'a> {
     history_len: usize,
     /// Set when this view is a past position of the game (read-only).
     replay: Option<ReplayInfo>,
+    /// Set in online games: whose browser this is, and player names.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    online: Option<&'a Online>,
     /// The actions this request applied, in order, for the page to animate.
     #[serde(skip_serializing_if = "Vec::is_empty")]
     trail: Vec<Frame>,
@@ -269,7 +309,12 @@ fn phase_label(p: &Phase) -> String {
 fn view_with<'a>(id: &'a str, s: &'a Session, replay: Option<ReplayInfo>) -> View<'a> {
     let g = &s.game;
     let current = g.current_player();
-    let human_to_act = replay.is_none() && current.is_some_and(|p| s.seats[p.0] == SeatKind::Human);
+    // Online, only this browser's own seat acts from this page.
+    let mine = |p: PlayerId| match &s.online {
+        Some(o) => o.me == Some(p.0),
+        None => s.seats[p.0] == SeatKind::Human,
+    };
+    let human_to_act = replay.is_none() && current.is_some_and(mine);
     let legal = if human_to_act {
         g.legal_actions()
             .into_iter()
@@ -315,6 +360,7 @@ fn view_with<'a>(id: &'a str, s: &'a Session, replay: Option<ReplayInfo>) -> Vie
         ranking: g.ranking(),
         history_len: g.history().len(),
         replay,
+        online: s.online.as_ref(),
         trail: Vec::new(),
     }
 }
@@ -593,6 +639,7 @@ impl Api {
             bots: seats.iter().map(|_| None).collect(),
             seats,
             log,
+            online: None,
         };
         let info = ReplayInfo {
             step,

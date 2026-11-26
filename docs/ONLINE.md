@@ -1,6 +1,13 @@
 # Online play: impresario.arc5.io
 
-Status: milestone 1 done (the GUI runs in the browser from WebAssembly: `crates/colosseum-wasm/build.sh`). Work continues on the `online` branch.
+Status: milestones 1–2 done. The GUI runs in the browser from WebAssembly, and `crates/colosseum-worker` relays online games between browsers. It has been tested locally with `wrangler dev`, not yet deployed. Work continues on the `online` branch.
+
+Run it locally:
+```bash
+crates/colosseum-wasm/build.sh                     # dist/: page + engine (needs the wasm32 target and wasm-bindgen-cli 0.2.130)
+cd crates/colosseum-worker && npx wrangler dev     # needs worker-build 0.9 (cargo install worker-build)
+```
+Open http://127.0.0.1:8787, set seats to Human or Live-input, and press **Create online game**. Share the `?g=CODE` link.
 
 Only the **live-input** bot is offered online.
 
@@ -8,7 +15,7 @@ Only the **live-input** bot is offered online.
 Play remotely with a few friends at `impresario.arc5.io`, on Cloudflare's free tier. Expect at most 2–3 games at once, each lasting 10–20 minutes. The engine is deterministic: `Game::replay(seed, history)` rebuilds any state. So the engine and bots run in the browser as WebAssembly, and the server only relays and stores moves.
 
 ## Architecture
-- **Cloudflare Pages** (`impresario.arc5.io`) serves the existing `static/` GUI plus a new WebAssembly bundle built from the engine and the bots.
+- **Workers Static Assets** (`[assets]` in `wrangler.toml`, from `dist/`) serve the existing `static/` GUI plus the WebAssembly bundle. Asset requests are free and never run the Worker, so no separate Pages project is needed.
 - **One Worker** handles `/api/*` and `/ws/*`.
   - It routes each game to its own **Durable Object** (SQLite-backed, using the WebSocket Hibernation API).
   - It writes finished games to **D1**.
@@ -24,7 +31,7 @@ Play remotely with a few friends at `impresario.arc5.io`, on Cloudflare's free t
 - **`crates/colosseum-wasm`** (new): `wasm-bindgen` wrapper.
   - `new_game(seats, seed)`, `apply(action_json)`, `view(seat)`, `legal_actions()`, `describe_action()`, `bot_move(kind)`, `replay(seed, history)`.
   - Reuse the view-building code from `crates/colosseum-web/src/main.rs` (`view_with`, `LegalAction`, `Frame`). Move it into a shared crate or module so the axum server and WebAssembly use the same code.
-- **`crates/colosseum-worker`** (new): a Worker plus Durable Object, written in Rust with `workers-rs` so it can link the engine directly. Fallback: a thin TypeScript Worker that imports the WebAssembly engine.
+- **`crates/colosseum-worker`**: the Worker plus the `GameRoom` Durable Object, in Rust with `workers-rs` 0.9, linking the engine directly to check moves. Moves are stored one key per move (`h0000000`, ...). The game is rebuilt by replay after the object hibernates.
 - **Bots:** the engine has no OS dependencies (only serde and serde_yml), so it compiles to WebAssembly as is. `crates/bots/live-input/src/search.rs` can use threads.
   - live-input's search is off by default (`budget: 0`, one thread), so it runs on WebAssembly unchanged.
   - Only live-input is built into WebAssembly.
@@ -38,15 +45,24 @@ Play remotely with a few friends at `impresario.arc5.io`, on Cloudflare's free t
 - Keep `crates/colosseum-web` working for local and offline play.
 
 ## Protocol (WebSocket, JSON)
+- **HTTP:** `POST /api/online/games {seats}` → `{code}`. `GET /ws/{code}` opens the WebSocket; an unknown code gets 404.
 - **Client → server:**
-  - `{"join": {"name", "seat?", "token?"}}`
-  - `{"action": {"seat", "token", "action"}}`
+  - `{"join": {"name"?, "seat"?, "token"?}}`: a token that holds a seat gets it back. Otherwise `seat` claims an open human seat, and no seat makes you a spectator. Sending `join` again on the same socket is how a spectator takes a seat.
+  - `{"action": {"index", "action"}}`
 - **Server → client:**
-  - `{"hello": {"seed", "seats", "history", "you": {"seat", "token"}}}`
-  - `{"applied": {"index", "seat", "action"}}`
-  - `{"error": "..."}`
-  - `{"seats": [...]}`
-- The server checks: the token matches the seat, it is that seat's turn, the action is legal, and `index == history.len()`.
+  - `{"hello": {"seats", "seed", "history", "names", "you": {"seat", "token"}}}`
+  - `{"applied": {"index", "action"}}`: sent to everyone, the sender included.
+  - `{"seats": {"names", "connected", "bot_runner"}}`: on every join and leave.
+  - `{"error": {"message"}}`: sent to the sender only.
+- The server checks, before storing and broadcasting a move:
+  - `index == history.len()`;
+  - the socket holds the seat to act, or that seat is a bot and the socket's seat is `bot_runner`;
+  - the engine accepts the move.
+- `bot_runner` is the seat of the earliest-joined connected socket. It moves to another player when that browser leaves.
+- Seeds are at most 52 bits, because they pass through JavaScript numbers.
+- The page: `?g=CODE` makes `local.js` load `online.js`, which stands in for the HTTP API.
+  - Moves, the player's own included, arrive through `window.colosseumPush`.
+  - Undo is off; Replay works locally.
 
 ## Access control (shared password)
 - Store the password as a Worker secret (`SITE_PASSWORD`). The user picks a passphrase of 3–4 words.
@@ -83,13 +99,18 @@ Play remotely with a few friends at `impresario.arc5.io`, on Cloudflare's free t
 - **Daily ceiling:** about 86–250 games per day. 2–3 concurrent games is fine.
 
 ## Deploy
-- `wrangler` config: a Pages project for the GUI; Worker routes `impresario.arc5.io/api/*` and `/ws/*`; Durable Object binding; D1 binding.
+- `crates/colosseum-worker/wrangler.toml`: the Worker with static assets from `dist/`, the `GAMES` Durable Object binding (SQLite-backed), and, later, D1 and a custom domain route for `impresario.arc5.io`.
 - DNS: `impresario` CNAME in the arc5.io zone (already on Cloudflare).
-- Build: `wasm-pack build crates/colosseum-wasm --target web`, then copy the output into the Pages output alongside `static/`.
+- Build: `crates/colosseum-wasm/build.sh`, then `npx wrangler deploy` from `crates/colosseum-worker`.
 
 ## Milestones
 1. ✅ `colosseum-wasm` builds; the local GUI runs fully in the browser (hotseat, bots in the browser) with no server. The API moved into `crates/colosseum-session`, shared by the axum server and WebAssembly.
-2. Worker plus Durable Object relay with seat tokens; two browsers play one game.
+2. ✅ Worker plus Durable Object relay with seat tokens; two browsers play one game. Tested with two Playwright browser contexts through `wrangler dev`:
+   - a full game, with both browsers ending in the same state;
+   - reload rejoins the same seat;
+   - out-of-turn, stale-index and spectator moves are rejected;
+   - games survive a restart;
+   - bot duty moves to another player when the runner leaves.
 3. Password gate, invite links, claiming and reclaiming seats, auto-bot after timeout, bot duty passed to another client.
 4. D1 archive plus past-games page.
 5. Deploy to impresario.arc5.io.

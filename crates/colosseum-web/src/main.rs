@@ -109,10 +109,13 @@ fn make_bot(kind: SeatKind, bot_seed: u64) -> Option<Bot> {
     }
 }
 
+/// At most 53 bits: the page reads seeds as JavaScript numbers, so a
+/// larger one would come back changed from a saved game.
 fn fresh_seed() -> u64 {
     std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
         .map_or(0, |d| d.as_nanos() as u64)
+        & ((1 << 53) - 1)
 }
 
 type Shared = Arc<Mutex<Api>>;

@@ -1,6 +1,6 @@
 [workspace]
 resolver = "3"
-members = ["crates/colosseum-engine", "crates/colosseum-cli", "crates/colosseum-session", "crates/colosseum-web", "crates/colosseum-wasm", "crates/colosseum-tournament", "crates/colosseum-trainer", "crates/bots/*"]
+members = ["crates/colosseum-engine", "crates/colosseum-cli", "crates/colosseum-session", "crates/colosseum-web", "crates/colosseum-wasm", "crates/colosseum-worker", "crates/colosseum-tournament", "crates/colosseum-trainer", "crates/bots/*"]
 
 [workspace.package]
 version = "0.1.0"
