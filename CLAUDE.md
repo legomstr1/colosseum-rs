@@ -18,6 +18,7 @@ cargo run -p colosseum-cli -- sim --players greedy,random,random --games 200
 cargo run -p colosseum-cli -- --data data play     # load YAML from disk instead of the embedded copy
 cargo run -p colosseum-web                         # browser GUI at http://127.0.0.1:8080
 crates/colosseum-wasm/build.sh                     # serverless GUI (WebAssembly) into dist/; serve it statically
+cd crates/colosseum-worker && npx wrangler d1 migrations apply colosseum --local   # once, for the games archive
 cd crates/colosseum-worker && npx wrangler dev     # online play locally (after build.sh, with SITE_PASSWORD in .dev.vars), http://127.0.0.1:8787
 ```
 
@@ -69,6 +70,7 @@ The workspace uses Rust edition 2024 and depends on `serde` and `serde_yml`, plu
   - `/ws/{code}` goes to that game's `GameRoom` Durable Object. The object stores the seats, seed, seat claims (name and token) and one key per move, checks each move with the engine, and broadcasts it. Protocol and rules: `docs/ONLINE.md`.
   - Shared password: secret `SITE_PASSWORD` (`.dev.vars` locally, gitignored). `POST /api/login` sets a signed `imp_auth` cookie that every other Worker route needs; a `LoginLimiter` Durable Object allows 5 tries per minute per address. Without the secret everything but static files gets 503.
   - Stand-ins: when the seat to act is a human seat with nobody connected for `STANDIN_SECONDS` (120), a Durable Object alarm sets `stand_in[seat]`, and the bot runner's browser plays it with live-input until the player rejoins or someone takes the seat over (joining a claimed seat that isn't connected).
+  - Archive: when a move ends the game, `GameRoom` writes one row to the D1 table `games` (`migrations/`, binding `DB`). Only after that succeeds does it clear its storage, keeping just the code; a failed write is retried on the next load. Later opens of the code load the game from D1 as read-only (everyone spectates). It's for later analysis with `wrangler d1 execute/export`; there is no UI for it. The row's `seed`/`seats`/`history` is a `SavedGame`.
   - It builds for the host too, so it stays a workspace member, but it only runs under wrangler.
 - **`crates/colosseum-web`**: binary `colosseum-web`.
   - An axum server that passes every `/api/*` request to `colosseum_session::Api` behind a mutex, and offers every bot. Bots move server-side until a human seat must act.
@@ -79,7 +81,7 @@ The workspace uses Rust edition 2024 and depends on `serde` and `serde_yml`, plu
   - The board takes clicks: noble moves (pick a die, click a noble, click a faded noble on a dashed square) and arena expansion (the `+` squares). Dice show Roman numerals. Trading is a table between two hands: click tokens across, set coins, Offer / Counter.
   - Below 900px wide the stage moves under the ring and the bench stacks.
   - Locally, every human seat plays from the same browser. Online play is the Worker's (below).
-- **Online play (milestones 1–3 done; local only so far)**: see `docs/ONLINE.md` for the Cloudflare design (engine and bots in WebAssembly in the browser, one Durable Object per game relaying moves over WebSockets, finished games stored in D1, shared-password gate) at impresario.arc5.io.
+- **Online play (milestones 1–4 done; local only so far)**: see `docs/ONLINE.md` for the Cloudflare design (engine and bots in WebAssembly in the browser, one Durable Object per game relaying moves over WebSockets, finished games stored in D1, shared-password gate) at impresario.arc5.io.
 - **The legal-action contract**: `legal_actions()` lists every legal move except open-ended trade offers (`ProposeTrade`, `CounterTrade`), which `check()`/`is_legal()` validate. Actions available at any time (exchanging a medal for coins, or a SpecialEvent token for a medal) are added for whichever player is to act.
 - **Determinism**: `Game` records `history`, and `Game::replay(config, n, seed, &history)` rebuilds the state exactly. Tests check this and the serde round-trip.
 - **Tests**: `crates/colosseum-engine/tests/engine.rs` plays 120 full bot games and checks invariants after every action: standard tokens are conserved, the medal supply is never exceeded, and podiums are conserved.

@@ -95,7 +95,8 @@ function me() {
   const h = view.seats.indexOf('human');
   return h >= 0 ? h : 0;
 }
-const youOr = (i) => (i === me() && isHuman(i) ? 'You' : pName(i));
+// Spectators of an online game have no seat, so nobody is "You".
+const youOr = (i) => (i === me() && isHuman(i) && !(view.online && view.online.me == null) ? 'You' : pName(i));
 
 function countList(list) {
   const out = {};
@@ -971,7 +972,7 @@ function anytimeButtons() {
 function mySeat(i) {
   const p = view.players[i];
   return `<div class="seat me ${view.current_player === i ? 'turn' : ''} ${acted(i)}" style="--pc:${pColor(i)}" data-seat="${i}">
-    <div class="col-a"><div class="sh"><span class="dot"></span><b>${isHuman(i) ? 'You' : pName(i)}</b><span class="muted kind">${pName(i)}${view.start_player === i ? ' · starts' : ''}</span><span class="spacer"></span><span class="best" title="Best event" data-best="${i}">${icon('spectators')}${p.best_score}</span></div>
+    <div class="col-a"><div class="sh"><span class="dot"></span><b>${youOr(i)}</b><span class="muted kind">${pName(i)}${view.start_player === i ? ' · starts' : ''}</span><span class="spacer"></span><span class="best" title="Best event" data-best="${i}">${icon('spectators')}${p.best_score}</span></div>
       <div class="sm"><span class="coins" title="Coins" data-coins="${i}">${icon('coins')}${p.coins}</span><span class="ex">${extras(p)}</span><span>arena ${p.arena.len}</span><span class="spacer"></span>${anytimeButtons()}</div>
       ${seatToks(i, 'sm')}</div>
     <div class="col-b">${isHuman(i) ? '' : lastMoveLine(i)}${[...p.programs].sort((a, b) => a.produced - b.produced).map((pr) => programRow(pr, i)).join('')}</div></div>`;

@@ -56,6 +56,12 @@ const BOT_KINDS: &[&str] = &["live-input"];
 struct Meta {
     seats: Vec<String>,
     seed: u64,
+    /// The game code, for the archive row.
+    #[serde(default)]
+    code: String,
+    /// When the game was created (ms since 1970).
+    #[serde(default)]
+    started: f64,
 }
 
 #[derive(Clone, Serialize, Deserialize)]
@@ -286,6 +292,8 @@ async fn games(mut req: Request, env: Env) -> Result<Response> {
         let meta = Meta {
             seats: body.seats,
             seed,
+            code: code.clone(),
+            started: now(),
         };
         let mut init = RequestInit::new();
         init.with_method(Method::Post)
@@ -337,6 +345,18 @@ struct Loaded {
     game: Game,
     claims: Vec<Option<Claim>>,
     stand_in: Vec<bool>,
+    /// Finished and written to D1; storage is cleared. Everyone watches.
+    archived: bool,
+}
+
+/// One finished game as D1 returns it (lists are JSON text).
+#[derive(Deserialize)]
+struct ArchivedRow {
+    seats: String,
+    names: String,
+    seed: f64,
+    history: String,
+    started_at: f64,
 }
 
 impl Loaded {
@@ -349,6 +369,7 @@ impl Loaded {
 #[durable_object]
 pub struct GameRoom {
     state: State,
+    env: Env,
     loaded: RefCell<Option<Loaded>>,
     /// How long the seat to act may sit empty before a bot plays it.
     stand_in_ms: i64,
@@ -363,6 +384,7 @@ impl DurableObject for GameRoom {
             .unwrap_or(120);
         GameRoom {
             state,
+            env,
             loaded: RefCell::new(None),
             stand_in_ms: secs.max(1) * 1000,
         }
@@ -512,6 +534,9 @@ impl GameRoom {
     /// Starts the stand-in countdown when the seat to act sits empty, and
     /// cancels it otherwise, so an old countdown never fires early.
     async fn update_alarm(&self, skip: Option<&WebSocket>) -> Result<()> {
+        if self.loaded.borrow().as_ref().is_none_or(|l| l.archived) {
+            return Ok(());
+        }
         let storage = self.state.storage();
         if self.waiting_seat(skip).is_some() {
             if storage.get_alarm().await?.is_none() {
@@ -531,7 +556,11 @@ impl GameRoom {
         }
         let storage = self.state.storage();
         let Some(meta) = storage.get::<Meta>("meta").await? else {
-            return Ok(false);
+            // A finished game lives in D1; storage keeps only its code.
+            return match storage.get::<String>("archived").await? {
+                Some(code) => self.load_archived(&code).await,
+                None => Ok(false),
+            };
         };
         let claims: Vec<Option<Claim>> = storage
             .get("claims")
@@ -556,17 +585,134 @@ impl GameRoom {
             game.apply(action)
                 .map_err(|e| Error::RustError(format!("stored move is illegal: {}", e.reason)))?;
         }
-        // Another event may have loaded it while this one awaited storage.
-        let mut slot = self.loaded.borrow_mut();
-        if slot.is_none() {
-            *slot = Some(Loaded {
-                meta,
-                game,
-                claims,
-                stand_in,
-            });
+        let over = game.is_over();
+        self.install(Loaded {
+            meta,
+            game,
+            claims,
+            stand_in,
+            archived: false,
+        });
+        if over {
+            // A finished game whose archive write failed earlier: retry.
+            self.archive().await;
         }
         Ok(true)
+    }
+
+    /// Keeps `l` unless another event loaded the game while this one awaited.
+    fn install(&self, l: Loaded) {
+        let mut slot = self.loaded.borrow_mut();
+        if slot.is_none() {
+            *slot = Some(l);
+        }
+    }
+
+    async fn load_archived(&self, code: &str) -> Result<bool> {
+        let db = self.env.d1("DB")?;
+        let row: Option<ArchivedRow> = db
+            .prepare("SELECT seats, names, seed, history, started_at FROM games WHERE code = ?")
+            .bind(&[JsValue::from_str(code)])?
+            .first(None)
+            .await?;
+        let Some(row) = row else {
+            return Ok(false);
+        };
+        let seats: Vec<String> = serde_json::from_str(&row.seats)?;
+        let names: Vec<String> = serde_json::from_str(&row.names)?;
+        let history: Vec<Action> = serde_json::from_str(&row.history)?;
+        let mut game = Game::new(
+            Arc::new(GameConfig::embedded()),
+            seats.len(),
+            row.seed as u64,
+        )
+        .map_err(|e| Error::RustError(e.to_string()))?;
+        for action in history {
+            game.apply(action)
+                .map_err(|e| Error::RustError(format!("archived move is illegal: {}", e.reason)))?;
+        }
+        let n = seats.len();
+        let claims = names
+            .into_iter()
+            .map(|name| {
+                (!name.is_empty()).then(|| Claim {
+                    name,
+                    token: String::new(),
+                })
+            })
+            .collect();
+        self.install(Loaded {
+            meta: Meta {
+                seats,
+                seed: row.seed as u64,
+                code: code.to_string(),
+                started: row.started_at,
+            },
+            game,
+            claims,
+            stand_in: vec![false; n],
+            archived: true,
+        });
+        Ok(true)
+    }
+
+    /// Writes a finished game to D1, then clears this object's storage but
+    /// for its code. If the write fails, storage stays and `load` retries.
+    async fn archive(&self) {
+        if let Err(e) = self.try_archive().await {
+            console_error!("archiving failed, will retry: {e}");
+        }
+    }
+
+    async fn try_archive(&self) -> Result<()> {
+        let (values, code) = {
+            let guard = self.loaded.borrow();
+            let Some(l) = guard.as_ref() else {
+                return Ok(());
+            };
+            if l.archived || !l.game.is_over() {
+                return Ok(());
+            }
+            let code = l.meta.code.clone();
+            if code.is_empty() {
+                return Err(Error::RustError(
+                    "game has no code (made before archiving existed)".into(),
+                ));
+            }
+            let scores: Vec<u32> = l.game.players().iter().map(|p| p.best_score).collect();
+            let ranking: Vec<usize> = l.game.ranking().iter().map(|p| p.0).collect();
+            let values = vec![
+                JsValue::from_str(&code),
+                JsValue::from_f64(l.meta.started),
+                JsValue::from_f64(now()),
+                JsValue::from_f64(l.meta.seed as f64),
+                JsValue::from_str(&serde_json::to_string(&l.meta.seats)?),
+                JsValue::from_str(&serde_json::to_string(&Self::names(l))?),
+                JsValue::from_str(&serde_json::to_string(&scores)?),
+                JsValue::from_str(&serde_json::to_string(&ranking)?),
+                JsValue::from_f64(l.game.history().len() as f64),
+                JsValue::from_str(&serde_json::to_string(l.game.history())?),
+            ];
+            (values, code)
+        };
+        self.env
+            .d1("DB")?
+            .prepare(
+                "INSERT OR REPLACE INTO games \
+                 (code, started_at, ended_at, seed, seats, names, scores, ranking, moves, history) \
+                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            )
+            .bind(&values)?
+            .run()
+            .await?;
+        let storage = self.state.storage();
+        storage.delete_alarm().await?;
+        storage.delete_all().await?;
+        storage.put("archived", &code).await?;
+        if let Some(l) = self.loaded.borrow_mut().as_mut() {
+            l.archived = true;
+        }
+        Ok(())
     }
 
     fn names(l: &Loaded) -> Vec<String> {
@@ -603,7 +749,13 @@ impl GameRoom {
                     .iter()
                     .position(|c| c.as_ref().is_some_and(|c| c.token == t))
             });
-            let you = if let Some(s) = held {
+            let you = if l.archived {
+                // A finished, archived game: everyone watches.
+                You {
+                    seat: None,
+                    token: None,
+                }
+            } else if let Some(s) = held {
                 You {
                     seat: Some(s),
                     token: token.clone(),
@@ -754,7 +906,9 @@ impl GameRoom {
         for w in self.state.get_websockets() {
             let _ = w.send_with_str(&text);
         }
-        self.update_alarm(None).await
+        self.update_alarm(None).await?;
+        self.archive().await;
+        Ok(())
     }
 }
 

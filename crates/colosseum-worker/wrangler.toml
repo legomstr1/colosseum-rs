@@ -35,3 +35,12 @@ new_sqlite_classes = ["GameRoom"]
 [[migrations]]
 tag = "v2"
 new_sqlite_classes = ["LoginLimiter"]
+
+# Finished games (docs/ONLINE.md). Locally: npx wrangler d1 migrations apply colosseum --local
+# Before deploying: npx wrangler d1 create colosseum, paste its database_id
+# here, then apply the migrations with --remote.
+[[d1_databases]]
+binding = "DB"
+database_name = "colosseum"
+database_id = "local-placeholder"
+migrations_dir = "migrations"

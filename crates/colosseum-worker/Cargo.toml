@@ -12,7 +12,7 @@ crate-type = ["cdylib"]
 colosseum-engine.workspace = true
 serde.workspace = true
 serde_json.workspace = true
-worker = "0.9"
+worker = { version = "0.9", features = ["d1"] }
 serde-wasm-bindgen = "0.6"
 hmac = "0.12"
 sha2 = "0.10"

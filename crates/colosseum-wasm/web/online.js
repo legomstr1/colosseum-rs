@@ -122,6 +122,8 @@ export function startOnline(code, local) {
     if (you.token) write(TOKEN(code), you.token);
     client = new OnlineClient(code, JSON.stringify(seats), seed, JSON.stringify(h.history), JSON.stringify(shownNames()), you.seat ?? -1);
     if (o.standIn.length === seats.length) client.set_stand_ins(JSON.stringify(o.standIn));
+    // A finished game has no seats to take: just show it.
+    if (client.current_player() < 0) watching = true;
     o.state = you.seat !== null || watching ? 'playing' : 'join';
     show();
     maybeBot();
@@ -151,8 +153,9 @@ export function startOnline(code, local) {
   // Names as the bench shows them: "Ann · bot" while a bot stands in,
   // "Ann · away" while Ann isn't connected.
   function shownNames() {
+    const over = client && client.current_player() < 0;
     return o.names.map((n, i) => {
-      if (!n) return n;
+      if (!n || over) return n;
       if (o.standIn[i]) return `${n} · bot`;
       if (o.connected.length && !o.connected[i] && seats[i] === 'human') return `${n} · away`;
       return n;

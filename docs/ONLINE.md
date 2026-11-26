@@ -1,11 +1,12 @@
 # Online play: impresario.arc5.io
 
-Status: milestones 1–3 done. The GUI runs in the browser from WebAssembly, and `crates/colosseum-worker` relays online games between browsers behind a shared password. Absent players can be stood in for by a bot or taken over. It has been tested locally with `wrangler dev`, not yet deployed. Work continues on the `online` branch.
+Status: milestones 1–4 done. The GUI runs in the browser from WebAssembly, and `crates/colosseum-worker` relays online games between browsers behind a shared password. Absent players can be stood in for by a bot or taken over. Finished games are archived to D1. It has been tested locally with `wrangler dev`, not yet deployed. Work continues on the `online` branch.
 
 Run it locally:
 ```bash
 crates/colosseum-wasm/build.sh                     # dist/: page + engine (needs the wasm32 target and wasm-bindgen-cli 0.2.130)
-echo 'SITE_PASSWORD=pick a passphrase' > crates/colosseum-worker/.dev.vars   # gitignored; without it every request gets 503
+echo 'SITE_PASSWORD=pick a passphrase' > crates/colosseum-worker/.dev.vars
+(cd crates/colosseum-worker && npx wrangler d1 migrations apply colosseum --local)   # once: the games table   # gitignored; without it every request gets 503
 cd crates/colosseum-worker && npx wrangler dev     # needs worker-build 0.9 (cargo install worker-build)
                                                    # add --var STANDIN_SECONDS:5 to see stand-ins quickly
 ```
@@ -93,8 +94,28 @@ Play remotely with a few friends at `impresario.arc5.io`, on Cloudflare's free t
 - **Spectators:** connect without a seat and receive the same move stream.
 
 ## Storage
-- **D1 table `games`:** `id, started_at, ended_at, seed, seats_json, scores_json, history_json`. About 10–20 KB per game, so roughly 33k games per 500 MB database.
-- **Past games page:** lists rows; opening one loads the existing Replay viewer through `replay()`.
+Finished games go to D1 for later analysis. There is no page or API for browsing them; use `wrangler d1`.
+
+- **Table `games`** (`crates/colosseum-worker/migrations/0001_games.sql`), one row per finished game:
+  - `code`, `started_at`, `ended_at` (ms since 1970), `seed`, `moves`;
+  - JSON text columns: `seats`, `names` (by seat, "" for bots), `scores` (`best_score` by seat), `ranking` (seat indexes, winner first) and `history` (the engine's `Action`s).
+  - `seed` + `seats` + `history` is a `SavedGame`, so any row replays exactly with `Game::replay`. It also loads in the local GUI: save `{seats, seed, history}` as JSON and use Game → Load from file. Or `POST` it to `colosseum-web`'s `/api/games/load`.
+  - A tested 3-player game took 5.3 KB of history, so a 500 MB database holds roughly 50–90k games.
+- **Archive flow** (`GameRoom::try_archive`):
+  - When a move ends the game, the object `INSERT OR REPLACE`s the row.
+  - Only after that write succeeds does it delete its alarm and all its storage, keeping just `archived = <code>`.
+  - If the write fails, storage stays, and the next `load` of that finished game retries.
+  - Opening the code later (a reload, an old invite link) loads the game back from D1 as read-only. Everyone joins as a spectator, and the page goes straight to watching the final board.
+- **Getting data out:**
+  ```bash
+  cd crates/colosseum-worker
+  npx wrangler d1 execute colosseum --remote --command "SELECT code, ended_at, names, scores, ranking FROM games ORDER BY ended_at DESC"
+  npx wrangler d1 export colosseum --remote --output games.sql      # everything, as SQL
+  # wins per player (bots count under their seat kind):
+  npx wrangler d1 execute colosseum --remote --command \
+    "SELECT coalesce(nullif(json_extract(names, '$[' || json_extract(ranking, '$[0]') || ']'), ''), json_extract(seats, '$[' || json_extract(ranking, '$[0]') || ']')) AS winner, count(*) AS wins FROM games GROUP BY winner ORDER BY wins DESC"
+  ```
+  Use `--local` instead of `--remote` against `wrangler dev`'s copy.
 
 ## Free-tier budget (per 20-min, 5-player game)
 - **Durable Object requests:** about 50 (WebSocket messages count 20 to 1).
@@ -103,7 +124,8 @@ Play remotely with a few friends at `impresario.arc5.io`, on Cloudflare's free t
 - **Daily ceiling:** about 86–250 games per day. 2–3 concurrent games is fine.
 
 ## Deploy
-- `crates/colosseum-worker/wrangler.toml`: the Worker with static assets from `dist/`, the `GAMES` Durable Object binding (SQLite-backed), and, later, D1 and a custom domain route for `impresario.arc5.io`.
+- `crates/colosseum-worker/wrangler.toml`: the Worker with static assets from `dist/`, the `GAMES` and `LIMITER` Durable Object bindings (SQLite-backed), the `DB` D1 binding, and later a custom domain route for `impresario.arc5.io`.
+- D1: `npx wrangler d1 create colosseum`, paste its `database_id` into `wrangler.toml` (it says `local-placeholder` now), then `npx wrangler d1 migrations apply colosseum --remote`.
 - DNS: `impresario` CNAME in the arc5.io zone (already on Cloudflare).
 - Build: `crates/colosseum-wasm/build.sh`, then `npx wrangler deploy` from `crates/colosseum-worker`.
 
@@ -123,7 +145,11 @@ Play remotely with a few friends at `impresario.arc5.io`, on Cloudflare's free t
      - C logs in and uses **Take over** on B's seat.
      - B returns: its token has been dropped, so it gets the join screen.
      - A and C finish the game in the same state.
-4. D1 archive plus past-games page.
+4. ✅ D1 archive of finished games, for later analysis (no browsing UI, by choice). Tested through `wrangler dev`:
+   - a two-browser game wrote exactly one row, whose names, scores, ranking and move count matched both browsers;
+   - replaying the row's `seed`/`seats`/`history` through the engine gave the same ranking and scores;
+   - the object's storage kept only `archived`;
+   - after a restart the invite link loaded the finished game from D1 for a new browser (watching, with names), and a seat request got a spectator.
 5. Deploy to impresario.arc5.io.
 
 ## Verification
