@@ -1,6 +1,8 @@
 # Online play: impresario.arc5.io
 
-Status: planned. Implementation happens on the `online` branch.
+Status: milestone 1 done (the GUI runs in the browser from WebAssembly: `crates/colosseum-wasm/build.sh`). Work continues on the `online` branch.
+
+Only the **live-input** bot is offered online.
 
 ## Goal
 Play remotely with a few friends at `impresario.arc5.io`, on Cloudflare's free tier. Expect at most 2–3 games at once, each lasting 10–20 minutes. The engine is deterministic: `Game::replay(seed, history)` rebuilds any state. So the engine and bots run in the browser as WebAssembly, and the server only relays and stores moves.
@@ -23,9 +25,9 @@ Play remotely with a few friends at `impresario.arc5.io`, on Cloudflare's free t
   - `new_game(seats, seed)`, `apply(action_json)`, `view(seat)`, `legal_actions()`, `describe_action()`, `bot_move(kind)`, `replay(seed, history)`.
   - Reuse the view-building code from `crates/colosseum-web/src/main.rs` (`view_with`, `LegalAction`, `Frame`). Move it into a shared crate or module so the axum server and WebAssembly use the same code.
 - **`crates/colosseum-worker`** (new): a Worker plus Durable Object, written in Rust with `workers-rs` so it can link the engine directly. Fallback: a thin TypeScript Worker that imports the WebAssembly engine.
-- **Bots:** the engine has no OS dependencies (only serde and serde_yml), so it compiles to WebAssembly as is. `crates/bots/live-input/src/search.rs` and `crates/bots/search` use time and threads.
-  - Put those behind a `cfg` check or a WebAssembly-safe timer (`web-time`).
-  - Leave out the `search` bot online at first.
+- **Bots:** the engine has no OS dependencies (only serde and serde_yml), so it compiles to WebAssembly as is. `crates/bots/live-input/src/search.rs` can use threads.
+  - live-input's search is off by default (`budget: 0`, one thread), so it runs on WebAssembly unchanged.
+  - Only live-input is built into WebAssembly.
 - **`static/app.js`**
   - Replace `fetch('/api/games/...')` calls with calls into the local WebAssembly engine plus a WebSocket.
   - Read `?game=<id>`; keep the seat token in localStorage.
@@ -65,7 +67,7 @@ Play remotely with a few friends at `impresario.arc5.io`, on Cloudflare's free t
 - **Rejoin, same browser:** reconnects automatically with the stored token.
 - **Rejoin, other device:** anyone with the password can claim a human seat whose player is not currently connected. Claiming issues a new token, and any old token stops working.
 - **Dropouts (auto-bot):**
-  - When the seat to act has had no connected player for 2 minutes, a Durable Object alarm marks it `bot_controlled` with a default kind (`tuned-2`) and broadcasts that.
+  - When the seat to act has had no connected player for 2 minutes, a Durable Object alarm marks it `bot_controlled` with the `live-input` bot and broadcasts that.
   - The client on bot duty plays that seat until a player reconnects or claims it. Control then returns to the player at their next decision.
 - **Bot duty:** assigned to the creator if connected, otherwise to the connected client that joined earliest. When the client on duty disconnects, the Durable Object passes duty to the next one.
 - **Spectators:** connect without a seat and receive the same move stream.
@@ -86,7 +88,7 @@ Play remotely with a few friends at `impresario.arc5.io`, on Cloudflare's free t
 - Build: `wasm-pack build crates/colosseum-wasm --target web`, then copy the output into the Pages output alongside `static/`.
 
 ## Milestones
-1. `colosseum-wasm` builds; the local GUI runs fully in the browser (hotseat, bots in the browser) with no server.
+1. ✅ `colosseum-wasm` builds; the local GUI runs fully in the browser (hotseat, bots in the browser) with no server. The API moved into `crates/colosseum-session`, shared by the axum server and WebAssembly.
 2. Worker plus Durable Object relay with seat tokens; two browsers play one game.
 3. Password gate, invite links, claiming and reclaiming seats, auto-bot after timeout, bot duty passed to another client.
 4. D1 archive plus past-games page.

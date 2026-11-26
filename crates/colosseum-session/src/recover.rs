@@ -18,7 +18,12 @@ pub struct Recovered {
 /// `log` is the event text after the "New game" line. `human` says which
 /// seats are humans: the old server stopped only when one of them was to act.
 pub fn recover(game: Game, log: &[String], human: &[bool]) -> Result<Recovered, String> {
-    let mut search = Search { log, human, visited: 0, furthest: 0 };
+    let mut search = Search {
+        log,
+        human,
+        visited: 0,
+        furthest: 0,
+    };
     let mut history = Vec::new();
     if search.dfs(game, 0, &mut history) {
         Ok(Recovered { history })
@@ -64,7 +69,11 @@ impl Search<'_> {
             let lines: Vec<String> = events.iter().map(ToString::to_string).collect();
             if lines.is_empty() {
                 silent.push((action, next));
-            } else if self.log.get(at..at + lines.len()).is_some_and(|l| l == lines.as_slice()) {
+            } else if self
+                .log
+                .get(at..at + lines.len())
+                .is_some_and(|l| l == lines.as_slice())
+            {
                 printing.push((action, next, lines.len()));
             }
         }
@@ -143,8 +152,8 @@ fn parse_assets(s: &str) -> Option<Assets> {
 mod tests {
     use super::*;
     use colosseum_engine::GameConfig;
-    use colosseum_engine::agent::{Agent, GreedyAgent};
     use colosseum_engine::GameEvent;
+    use colosseum_engine::agent::{Agent, GreedyAgent};
     use std::sync::Arc;
 
     #[test]
@@ -152,8 +161,18 @@ mod tests {
         let mut give = Assets::new();
         give.add(Asset::ALL[0], 2);
         give.add(Asset::ALL[3], 1);
-        let terms = TradeTerms { give, give_coins: 3, receive: Assets::new(), receive_coins: 0 };
-        let line = GameEvent::TradeProposed { from: PlayerId(0), to: PlayerId(2), terms: terms.clone() }.to_string();
+        let terms = TradeTerms {
+            give,
+            give_coins: 3,
+            receive: Assets::new(),
+            receive_coins: 0,
+        };
+        let line = GameEvent::TradeProposed {
+            from: PlayerId(0),
+            to: PlayerId(2),
+            terms: terms.clone(),
+        }
+        .to_string();
         assert_eq!(parse_offer(&line), Some((PlayerId(0), PlayerId(2), terms)));
     }
 
@@ -165,7 +184,9 @@ mod tests {
         let mut bots: Vec<GreedyAgent> = (0..3).map(|i| GreedyAgent::new(i + 1)).collect();
         let mut log = Vec::new();
         for _ in 0..120 {
-            let Some(p) = game.current_player() else { break };
+            let Some(p) = game.current_player() else {
+                break;
+            };
             let legal = game.legal_actions();
             let a = bots[p.0].choose_action(&game, &legal);
             log.extend(game.apply(a).unwrap().iter().map(ToString::to_string));

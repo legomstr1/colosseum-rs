@@ -1,3 +1,4 @@
 /target
 /tuning/*/state.tmp
 /tuning/*/champion.tmp
+/dist

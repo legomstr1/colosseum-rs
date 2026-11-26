@@ -37,6 +37,9 @@ const SEAT_LABEL = {
   human: 'Human', 'live-input': 'Live-input', 'tuned-2': 'Tuned-2', 'tuned-1': 'Tuned-1', 'int-event': 'Int-event', search: 'Search', house: 'House', oracle: 'Oracle', maestro: 'Maestro', chameleon: 'Chameleon', trader: 'Trader', planner: 'Planner',
   auctioneer: 'Auctioneer', showman: 'Showman', rollout: 'Rollout (slow)', greedy: 'Greedy', random: 'Random',
 };
+// Seat kinds this server offers (GET /api/seats); every kind until it answers.
+let seatKinds = Object.keys(SEAT_LABEL);
+const defaultBot = () => seatKinds.find((k) => k !== 'human') || 'human';
 const PHASES = ['Investing', 'Acquiring', 'Trading', 'Producing', 'Closing'];
 const ROMAN = ['', 'I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI', 'XII'];
 
@@ -170,7 +173,14 @@ function toast(lines) {
   toast.timer = setTimeout(() => { el.hidden = true; }, 3800);
 }
 
+// The page talks to colosseum-web over HTTP, or, in the static build, to
+// the same API compiled to WebAssembly (window.colosseumLocal, local.js).
 async function api(path, data) {
+  if (window.colosseumLocal) {
+    const r = window.colosseumLocal(data === undefined ? 'GET' : 'POST', path, data);
+    if (r.status !== 200) throw new Error(r.json.error || `error ${r.status}`);
+    return r.json;
+  }
   const res = await fetch(path, data === undefined ? {} : {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data),
   });
@@ -198,7 +208,7 @@ function renderSetup() {
   const counts = Object.keys(rules().starting_positions).map(Number);
   const [min, max] = [Math.min(...counts), Math.max(...counts)];
   const seats = setup.seats.map((s, i) => {
-    const opts = Object.keys(SEAT_LABEL).map((k) =>
+    const opts = seatKinds.map((k) =>
       `<option value="${k}" ${s === k ? 'selected' : ''}>${SEAT_LABEL[k]}${k === 'human' ? '' : ' bot'}</option>`).join('');
     return `<div class="seat-row"><span class="dot" style="--pc:${pColor(i)}"></span><b style="width:28px">${pName(i)}</b><select class="input seat-kind" data-seat="${i}">${opts}</select></div>`;
   }).join('');
@@ -209,7 +219,7 @@ function renderSetup() {
       <div class="card"><h3>Players</h3>
         <div style="display:flex;flex-direction:column;gap:10px">${seats}</div>
         <div class="btns" style="margin-top:12px;justify-content:flex-start">
-          <button class="btn small" ${setup.seats.length >= max ? 'disabled' : ''} data-h="${on(() => { setup.seats.push('house'); render(); })}">Add player</button>
+          <button class="btn small" ${setup.seats.length >= max ? 'disabled' : ''} data-h="${on(() => { setup.seats.push(defaultBot()); render(); })}">Add player</button>
           <button class="btn small" ${setup.seats.length <= min ? 'disabled' : ''} data-h="${on(() => { setup.seats.pop(); render(); })}">Remove player</button>
         </div></div>
       <div class="row"><input class="input" id="seed" placeholder="Seed (optional)" value="${esc(setup.seed)}" style="width:170px">
@@ -1297,7 +1307,13 @@ document.addEventListener('keydown', (e) => {
 });
 
 (async function boot() {
+  if (window.colosseumReady) await window.colosseumReady;
   config = await api('/api/config');
+  try {
+    const kinds = (await api('/api/seats')).filter((k) => k in SEAT_LABEL);
+    if (kinds.length) seatKinds = kinds;
+  } catch { /* older server: offer every kind */ }
+  setup.seats = setup.seats.map((k) => (seatKinds.includes(k) ? k : defaultBot()));
   const id = location.hash.slice(1);
   if (id) {
     try { view = await api(`/api/games/${id}`); logSeen = view.log.length; } catch { view = null; }

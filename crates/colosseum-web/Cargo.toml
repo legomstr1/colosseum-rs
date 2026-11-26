@@ -3,7 +3,7 @@ name = "colosseum-web"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
-description = "Browser interface for Colosseum: a JSON API over the engine plus a static web page"
+description = "Browser interface for Colosseum: an HTTP server for the shared JSON API plus a static web page"
 
 [[bin]]
 name = "colosseum-web"
@@ -11,9 +11,8 @@ path = "src/main.rs"
 
 [dependencies]
 colosseum-engine.workspace = true
+colosseum-session.workspace = true
 clap.workspace = true
-serde.workspace = true
-serde_json.workspace = true
 axum = "0.8"
 colosseum-bot-search = { path = "../bots/search" }
 colosseum-bot-house = { path = "../bots/house" }
