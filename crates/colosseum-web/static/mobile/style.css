@@ -197,3 +197,68 @@ a.btn { text-decoration: none; color: var(--ink); }
 .setup .row .spacer { display: none; }
 .setup .btn.big { flex: 1; }
 .setup .btn.small { padding: 9px 13px; font-size: 14px; }
+
+/* ---------- landscape: board across the screen, rail on the right ----------
+   A phone on its side (iPhone 15 Pro Max: 932x430, about 814x409 inside the
+   insets). The stage sits inside the ring as on desktop; the bar and seats
+   share a scrolling rail. */
+.mapp.land { flex-direction: row; gap: 8px; padding-top: max(6px, env(safe-area-inset-top)); padding-bottom: max(6px, env(safe-area-inset-bottom)); }
+.land .ring-area { flex: 1 1 auto; width: auto; height: 100%; aspect-ratio: auto; max-height: none; }
+.land .rail { flex: 0 0 216px; height: 100%; overflow: auto; -webkit-overflow-scrolling: touch; display: flex; flex-direction: column; gap: 6px; padding-bottom: 2px; }
+.land .mbar { flex-wrap: wrap; height: auto; gap: 4px; }
+.land .mtitle { flex: 1 1 100%; font-size: 14px; }
+.land .mbar .spacer { display: none; }
+.land .mbar .iconbtn { height: 32px; padding: 0 9px; font-size: 12.5px; flex: 1 1 auto; }
+.land .mbar .gamemenu { flex: 0 0 auto; }
+.land .gamemenu .menu { right: auto; left: 0; max-height: 70dvh; overflow: auto; }
+.land .opps { grid-template-columns: minmax(0, 1fr); gap: 5px; }
+.land .seat.opp { max-height: none; }
+.land .seat.me .sh { flex-wrap: wrap; row-gap: 2px; }
+.land .seat.me .sm { flex-wrap: wrap; }
+.land .seat.me .sh > .muted { display: none; } /* arena size: the board shows it */
+.land .seat.me .toks { flex: 1 1 100%; }
+.land .replay .rlabel + .muted, .land .replay .ract { display: none; }
+
+/* the stage inside the ring */
+.land .stage { padding: 8px 10px; gap: 8px; border-radius: 14px; box-shadow: none; --tok: 22px; }
+.land .stage.trade { gap: 5px; padding: 6px 8px; }
+.land .st-row:has(.opt) { display: grid; grid-template-columns: repeat(auto-fit, minmax(60px, 1fr)); width: 100%; gap: 8px 6px; padding-top: 6px; }
+.land .opt { width: auto; height: 60px; min-width: 0; min-height: 0; border-radius: 12px; font-size: 11px; gap: 2px; }
+.land .opt .oi { font-size: 20px; height: 22px; }
+.land .opt .oi .ic { width: 20px; height: 20px; }
+.land .opt .plus { font-size: 22px; }
+.land .opt .price { top: -8px; right: -4px; font-size: 10.5px; padding: 1px 5px; }
+.land .mk { padding: 6px; gap: 3px; border-radius: 12px; min-width: 0; min-height: 44px; --tok: 24px; }
+.land .stepper button { width: 40px; height: 40px; }
+.land .stepper span { min-width: 58px; font-size: 17px; }
+.land .btn.big { padding: 9px 16px; }
+.land .hand-line { padding: 4px 8px; --tok: 26px; min-height: 36px; }
+.land .deal { --tok: 24px; gap: 4px; }
+.land .deal.big { --tok: 26px; }
+.land .flow { grid-template-columns: 40px minmax(0, 1fr) 14px 40px; gap: 5px; width: 100%; }
+.land .flow .who { height: 22px; font-size: 11px; }
+.land .flow .tray { min-width: 0; padding: 3px 6px; min-height: 32px; }
+.land .round-btn { width: 46px; height: 46px; font-size: 19px; }
+.land .prod { flex-direction: row; align-items: flex-start; gap: 10px; flex-wrap: nowrap; width: 100%; }
+.land .dicepair { flex-direction: column; flex: none; }
+.land .bigdie { width: 54px; height: 54px; min-width: 54px; min-height: 54px; border-radius: 14px; }
+.land .roman { font-size: 24px; }
+.land .roman.long { font-size: 15px; }
+.land .pcards { flex: 1; display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 10px; padding-top: 8px; }
+.land .pcard { width: auto; padding: 8px 10px; gap: 5px; --tok: 17px; }
+.land .pcard .pt { font-size: 13px; }
+.land .podium { height: 90px; }
+.land .podium .step { width: 50px; }
+.land .bigtoks { --tok: 34px; }
+.land .caption .main { font-size: 14px; }
+.land .showcase { padding: 8px 12px; }
+.land .card { min-width: 0 !important; }
+
+/* sheets become centred cards on a wide, short screen */
+@media (orientation: landscape) and (max-height: 520px) {
+  .modal.sheet-wrap { align-items: flex-end; padding-left: env(safe-area-inset-left); padding-right: env(safe-area-inset-right); }
+  .panel.sheet { width: min(600px, 100%); max-height: 94dvh; }
+  .drawer { width: min(440px, 100%); border-left: 1px solid var(--line); padding: 10px max(14px, env(safe-area-inset-right)) calc(env(safe-area-inset-bottom) + 6px) 14px; }
+  .toast { top: 12px; }
+  .banner { font-size: 18px; }
+}

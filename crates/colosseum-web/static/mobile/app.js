@@ -6,6 +6,10 @@
 // full width with the round/phase tracker and scores in its middle, a strip
 // of opponent chips, your own seat, then a dock holding the current phase's
 // stage within thumb reach. Seat details open as bottom sheets.
+//
+// Turned sideways (a short landscape screen), the board takes the width with
+// the stage inside the ring, as on desktop, and the bar and seats move to a
+// rail on the right, your own seat first.
 'use strict';
 
 // ---------- presentation theme (not game rules) ----------
@@ -49,6 +53,9 @@ let handlers = [];
 let showPrograms = false;
 let showLog = false;
 let sheetSeat = null; // seat whose details are open in a bottom sheet
+// A phone on its side: landscape and too short for the portrait stack.
+const LANDSCAPE = window.matchMedia('(orientation: landscape) and (max-height: 520px)');
+const landscape = () => LANDSCAPE.matches;
 let logSeen = 0; // log entries before this index have been seen in the drawer
 let ringObserver = null;
 let replaySeq = 0; // discards step views that arrive after a newer request
@@ -540,6 +547,10 @@ function drawRing() {
   const el = document.getElementById('ring');
   if (!el || !view) return;
   const r = el.getBoundingClientRect();
+  if (landscape()) {
+    el.innerHTML = ringHtml(r.width, r.height, stageHtml());
+    return;
+  }
   el.innerHTML = ringHtml(r.width, r.height, ringCenter());
   const dock = document.getElementById('dock');
   if (dock) dock.innerHTML = stageHtml();
@@ -1262,9 +1273,12 @@ function render() {
   // board shrinks then to give the dock room.
   const ph = phaseName(view.phase);
   const compact = !view.game_over && ['Acquiring', 'Trading', 'Closing'].includes(ph) && (view.human_to_act || playback);
-  $app.innerHTML = `<div class="mapp ${view.replay ? 'replaying' : ''} ${compact ? 'compact' : ''}">${topBar()}${view.replay ? replayBar() : ''}
-    <div class="ring-area" id="ring"></div>${bench()}${mySeat(me())}<div class="dock" id="dock"></div></div>
-    ${showPrograms ? programsModal() : ''}${showLog ? logDrawer() : ''}${sheetSeat !== null ? seatSheet() : ''}`;
+  const sheets = `${showPrograms ? programsModal() : ''}${showLog ? logDrawer() : ''}${sheetSeat !== null ? seatSheet() : ''}`;
+  $app.innerHTML = landscape()
+    ? `<div class="mapp land ${view.replay ? 'replaying' : ''}"><div class="ring-area" id="ring"></div>
+        <aside class="rail">${topBar()}${view.replay ? replayBar() : ''}${mySeat(me())}${bench()}</aside></div>${sheets}`
+    : `<div class="mapp ${view.replay ? 'replaying' : ''} ${compact ? 'compact' : ''}">${topBar()}${view.replay ? replayBar() : ''}
+    <div class="ring-area" id="ring"></div>${bench()}${mySeat(me())}<div class="dock" id="dock"></div></div>${sheets}`;
   const ring = document.getElementById('ring');
   const r0 = ring.getBoundingClientRect();
   // Start from the drawn size so the first observation doesn't redraw (and cut off animations).
@@ -1330,6 +1344,9 @@ document.addEventListener('keydown', (e) => {
     render();
   }
 });
+
+// Turning the phone swaps the whole layout, not just the ring's size.
+LANDSCAPE.addEventListener('change', () => { if (view) render(); });
 
 (async function boot() {
   config = await api('/api/config');
