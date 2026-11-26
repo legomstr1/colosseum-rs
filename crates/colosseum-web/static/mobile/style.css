@@ -1,0 +1,199 @@
+/* Colosseum mobile layout, loaded after /style.css and overriding it. Built
+   for a phone in portrait (iPhone 15 Pro Max: 430x932 CSS px, Dynamic Island
+   and home indicator handled with safe-area insets). One screen, no page
+   scroll: bar, ring, opponents, your seat, then the dock with the stage. */
+body.mobile {
+  -webkit-tap-highlight-color: transparent; -webkit-text-size-adjust: 100%; touch-action: manipulation;
+  overscroll-behavior: none; font-size: 14px;
+}
+body.mobile.playing { overflow: hidden; }
+.btn:hover, .iconbtn:hover { border-color: var(--line-strong); }
+.btn.primary:hover { background: var(--ink); }
+a.btn { text-decoration: none; color: var(--ink); }
+
+.mapp {
+  height: 100dvh; display: flex; flex-direction: column; gap: 7px;
+  padding: max(8px, env(safe-area-inset-top)) max(10px, env(safe-area-inset-right)) max(8px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+}
+.mapp > * { flex: none; min-width: 0; }
+
+/* top bar */
+.mbar { display: flex; align-items: center; gap: 6px; height: 40px; }
+.mtitle { font-weight: 750; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.mbar .iconbtn { height: 36px; padding: 0 10px; font-size: 13px; border-radius: 10px; gap: 4px; }
+.mbar .iconbtn:disabled { opacity: .35; }
+.mbar .gamemenu summary.iconbtn { font-size: 20px; padding: 0 12px; }
+.gamemenu .menu { min-width: 200px; padding: 8px; }
+.gamemenu .menu .btn { padding: 10px 12px; font-size: 15px; }
+
+/* ring, with the tracker in its middle */
+.ring-area { width: 100%; aspect-ratio: 1; max-height: 40dvh; overflow: visible; transition: max-height .25s ease; }
+.mapp.compact .ring-area { max-height: 20dvh; }
+.ring { gap: 3px; }
+.sq { border-radius: 6px; }
+.sq .num { left: 3px; top: 1px; font-size: 8px; }
+.sq.rest::after { border-width: 3px; }
+.noble { border-radius: 6px; width: 70%; }
+.nobles .noble + .noble { width: 46%; }
+.gmove .d { right: 2px; top: 0; font-size: 9px; }
+.grow { inset: 2px; font-size: 22px; border-radius: 6px; }
+.stage-wrap { padding: 4px; }
+.rcenter {
+  height: 100%; border-radius: 14px; background: var(--bg); border: 1px solid var(--line);
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; padding: 8px; container-type: size; overflow: hidden;
+}
+.rcenter .rnd { font-size: 20px; font-weight: 750; white-space: nowrap; }
+.rcenter .rnd small { font-size: 13px; color: var(--muted); font-weight: 500; }
+.rcenter .pips { display: flex; gap: 4px; }
+.rcenter .pips span { width: 8px; height: 8px; border-radius: 999px; background: var(--line-strong); }
+.rcenter .pips span.done { background: #8f8778; }
+.rcenter .pips span.now { background: var(--gold); box-shadow: 0 0 0 2px var(--gold-soft); }
+.rcenter .phases { display: grid; grid-template-columns: repeat(5, 1fr); gap: 3px; width: 100%; }
+.rcenter .ph { display: flex; flex-direction: column; gap: 3px; font-size: 9px; color: var(--muted); text-align: center; overflow: hidden; }
+.rcenter .ph i { height: 4px; border-radius: 3px; background: var(--line-strong); }
+.rcenter .ph.done i { background: #8f8778; }
+.rcenter .ph.now i { background: var(--gold); }
+.rcenter .ph.now { color: var(--ink); font-weight: 700; }
+.rcenter .scores { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 6px; }
+.rcenter .sc { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 2px 7px; border-radius: 999px; background: var(--soft); }
+.rcenter .sc.turn { box-shadow: inset 0 0 0 1.5px var(--pc); }
+.rcenter .sc b { display: inline-flex; gap: 2px; align-items: center; }
+@container (max-height: 150px) { .rcenter .scores { display: none; } }
+@container (max-height: 90px) { .rcenter .phases, .rcenter .pips { display: none; } .rcenter .rnd { font-size: 15px; } }
+
+/* opponents: a row of chips */
+.opps { display: grid; grid-template-columns: repeat(var(--o), minmax(0, 1fr)); gap: 6px; }
+.seat { border-radius: 12px; }
+.seat.opp { padding: 5px 7px 6px; gap: 3px; border-top-width: 3px; max-height: 96px; overflow: hidden; cursor: pointer; }
+.seat.opp .sh b { font-size: 13px; }
+.seat .best { font-size: 15px; }
+.seat .best .ic { font-size: 12px; }
+.seat.opp .sm { font-size: 11.5px; gap: 2px 5px; }
+.seat.opp .ex { gap: 2px; }
+.seat.opp .ppills { gap: 2px; }
+.seat.opp .ppill { padding: 1px; }
+.seat.opp .toks { gap: 2px; }
+.seat.opp .tcol { gap: 1px; }
+.seat.opp .tok.xs { --tok: 12px; border-radius: 3px; }
+.seat.opp .starcol { padding: 1px; border-radius: 4px; }
+.seat.opp .lastmove { font-size: 10.5px; padding: 2px 5px; }
+.seat.turn { box-shadow: 0 0 0 2px var(--pc); }
+
+/* your seat */
+.seat.me { flex-direction: column; gap: 5px; padding: 7px 10px; border-top-width: 3px; }
+.seat.me .sh { gap: 8px; font-size: 13px; }
+.seat.me .sh .coins { font-size: 15px; }
+.seat.me .sm { gap: 6px; align-items: flex-end; }
+.seat.me .toks { gap: 4px; }
+/* Token stacks lie flat on a phone, so a seat stays one or two rows tall. */
+.seat .tcol, .sbody .tcol { flex-direction: row; gap: 2px; }
+.seat.me .starcol { padding: 1px; border-radius: 6px; }
+.ppills.tap { border: 0; background: var(--soft); border-radius: 999px; padding: 3px 4px 3px 3px; display: inline-flex; align-items: center; gap: 3px; cursor: pointer; flex: none; }
+.ppills.tap .ppill { background: #fff; }
+.ppills.tap .more { font-size: 18px; line-height: 1; color: var(--muted); padding: 0 3px; }
+.anytime .btn { padding: 6px 9px; }
+
+/* the dock: the current stage, scrolling if it needs to */
+.mapp > .dock { flex: 1 1 auto; min-height: 0; overflow: auto; -webkit-overflow-scrolling: touch; --s: 52px; --tok: 24px; border-radius: 18px; }
+.dock .stage { height: auto; min-height: 100%; gap: 12px; padding: 12px; border-radius: 18px; box-shadow: none; overflow: visible; }
+.dock .st-row { gap: 8px; }
+.dock .st-row:has(.opt) { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); width: 100%; gap: 10px 8px; padding-top: 6px; }
+.opt { width: auto; height: 74px; min-width: 0; min-height: 0; border-radius: 14px; font-size: 12px; gap: 3px; }
+.opt .oi { font-size: 24px; height: 28px; }
+.opt .oi .ic { width: 24px; height: 24px; }
+.opt .plus { font-size: 26px; }
+.opt .price { top: -8px; right: -5px; font-size: 11px; padding: 1px 6px; }
+.purse { font-size: 18px; }
+.mk { padding: 7px; gap: 3px; border-radius: 12px; min-width: 0; min-height: 50px; --tok: 26px; flex-wrap: wrap; }
+.stepper button { width: 44px; height: 44px; }
+.stepper span { min-width: 64px; font-size: 18px; }
+.btn.big { padding: 11px 18px; }
+.highbid { font-size: 20px; }
+
+/* trading */
+.dock .stage.trade { padding: 10px; gap: 8px; }
+.hand-line { padding: 6px 8px; --tok: 28px; min-height: 44px; border-radius: 12px; }
+.hand { gap: 6px; }
+.hgrp { gap: 2px; }
+.deal { --tok: 26px; gap: 6px; width: 100%; }
+.deal.big { --tok: 30px; }
+.flow { grid-template-columns: 40px minmax(0, 1fr) 14px 40px; gap: 5px; width: 100%; }
+.flow .who { height: 24px; font-size: 11px; }
+.flow .tray { min-width: 0; padding: 5px 6px; gap: 3px; }
+.flow .arrow { font-size: 15px; }
+.cstep button { width: 34px; height: 32px; font-size: 16px; }
+.cstep span { min-width: 36px; }
+.order { font-size: 10.5px; gap: 2px; flex-wrap: wrap; }
+.odot { padding: 1px 6px; }
+.pdot { padding: 6px 12px; font-size: 13px; }
+.was { flex-basis: 100%; }
+.round-btn { width: 56px; height: 56px; }
+
+/* producing */
+.prod { gap: 12px; flex-direction: column; width: 100%; }
+.bigdie { min-width: 62px; min-height: 62px; border-radius: 16px; }
+.link { width: 34px; height: 34px; }
+.pcards { gap: 12px; width: 100%; }
+.pcard { width: 100%; padding: 10px 12px; gap: 7px; --tok: 20px; border-radius: 14px; }
+.pcard .falloff { grid-template-columns: repeat(7, minmax(0, 1fr)); width: 100%; }
+.pscore { top: -10px; right: -4px; font-size: 14px; }
+
+/* closing and game over */
+.podium { height: 110px; gap: 8px; }
+.podium .step { width: 56px; }
+.podium .bar { font-size: 15px; }
+.bigtoks { --tok: 38px; }
+.dock .card { min-width: 0 !important; width: 100%; }
+
+/* playback */
+.caption .main { font-size: 15px; }
+.caption .aside { font-size: 12px; }
+.pb-foot { gap: 8px; }
+.speeds button { padding: 6px 10px; font-size: 12.5px; }
+.banner { font-size: 20px; padding: 10px 22px; }
+.toast { top: calc(env(safe-area-inset-top) + 48px); }
+
+/* bottom sheets: programs for sale, seat details */
+.modal.sheet-wrap { align-items: flex-end; padding: env(safe-area-inset-top) 0 0; }
+.panel.sheet {
+  width: 100%; max-height: 86dvh; border-radius: 20px 20px 0 0; border-bottom: 0;
+  padding-bottom: env(safe-area-inset-bottom); animation: sheet-up .22s ease-out;
+}
+@keyframes sheet-up { from { transform: translateY(40%); opacity: .3; } }
+.grab { width: 38px; height: 5px; border-radius: 999px; background: var(--line-strong); margin: 8px auto 0; flex: none; }
+.mhead { padding: 10px 14px 8px; }
+.sbody { padding: 4px 14px 14px; display: flex; flex-direction: column; gap: 10px; overflow: auto; }
+.sbody .sm { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; font-size: 14px; color: #6b6355; }
+.sbody .coins { display: inline-flex; gap: 4px; align-items: center; font-weight: 750; color: var(--ink); }
+.sbody .coins .ic { color: #b08a20; }
+.sbody .best { font-weight: 800; font-size: 20px; display: inline-flex; gap: 4px; align-items: center; }
+.sbody .ex { display: inline-flex; gap: 6px; }
+.sbody .progs { display: flex; flex-direction: column; gap: 6px; }
+.sbody .prow .need { --tok: 20px; }
+.plist-row { grid-template-columns: 32px 50px minmax(0, 1fr) 54px; gap: 6px 8px; padding: 10px 8px; border-bottom: 1px solid var(--line); border-radius: 0; }
+.plist-row > .pno { grid-area: 1 / 1; }
+.plist-row > .cost { grid-area: 1 / 2; }
+.plist-row > .t { grid-area: 1 / 3; min-width: 0; }
+.plist-row > .hold { grid-area: 1 / 4; }
+.plist-row > .falloff { display: grid; grid-area: 2 / 1 / 3 / -1; grid-template-columns: repeat(7, minmax(0, 1fr)); }
+.plist-row > .need { grid-area: 3 / 1 / 4 / -1; --tok: 22px; }
+.plist-body { -webkit-overflow-scrolling: touch; }
+
+/* log: a full-screen sheet */
+.drawer { width: 100%; border-left: 0; padding: calc(env(safe-area-inset-top) + 8px) 14px calc(env(safe-area-inset-bottom) + 8px); }
+.log { font-size: 13px; }
+
+/* step-through bar */
+.replay { gap: 5px; padding: 6px 8px; font-size: 12px; }
+.replay .btn.small { padding: 6px 8px; }
+.replay input[type=range] { flex-basis: 100%; order: -1; min-width: 0; }
+.replay .ract { font-size: 12px; }
+
+/* setup */
+.setup { margin: 0 auto; padding: calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 24px); }
+.setup .input { font-size: 16px; padding: 10px 12px; }
+.setup select.input { flex: 1; }
+.setup .row .input#seed { flex: 1 1 100%; min-width: 0; width: auto !important; }
+.setup .row .spacer { display: none; }
+.setup .btn.big { flex: 1; }
+.setup .btn.small { padding: 9px 13px; font-size: 14px; }

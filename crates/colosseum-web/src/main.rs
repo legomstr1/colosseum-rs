@@ -23,6 +23,11 @@ const INDEX_HTML: &str = include_str!("../static/index.html");
 const APP_JS: &str = include_str!("../static/app.js");
 const ICONS_JS: &str = include_str!("../static/icons.js");
 const STYLE_CSS: &str = include_str!("../static/style.css");
+// The phone layout at /m: its own page and script, the shared icons, and a
+// stylesheet loaded on top of the desktop one.
+const M_INDEX_HTML: &str = include_str!("../static/mobile/index.html");
+const M_APP_JS: &str = include_str!("../static/mobile/app.js");
+const M_STYLE_CSS: &str = include_str!("../static/mobile/style.css");
 
 #[derive(Parser)]
 #[command(name = "colosseum-web", about = "Play Colosseum in the browser")]
@@ -661,6 +666,10 @@ async fn main() {
         .route("/app.js", get(|| async { asset("text/javascript; charset=utf-8", APP_JS) }))
         .route("/icons.js", get(|| async { asset("text/javascript; charset=utf-8", ICONS_JS) }))
         .route("/style.css", get(|| async { asset("text/css; charset=utf-8", STYLE_CSS) }))
+        .route("/m", get(|| async { asset("text/html; charset=utf-8", M_INDEX_HTML) }))
+        .route("/m/", get(|| async { asset("text/html; charset=utf-8", M_INDEX_HTML) }))
+        .route("/m/app.js", get(|| async { asset("text/javascript; charset=utf-8", M_APP_JS) }))
+        .route("/m/style.css", get(|| async { asset("text/css; charset=utf-8", M_STYLE_CSS) }))
         .route("/api/config", get(get_config))
         .route("/api/games", post(create_game))
         .route("/api/games/{id}", get(get_game))
