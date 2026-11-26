@@ -36,11 +36,13 @@ export function startOnline(code, local) {
 
   const o = {
     code,
-    state: 'connecting', // connecting | join | playing | missing
+    state: 'connecting', // connecting | login | join | playing | missing
     seats: [],
     names: [],
     connected: [],
-    start: connect,
+    standIn: [],
+    start,
+    // Also takes over a seat whose player isn't connected.
     join(seat, name) {
       name = (name || '').trim();
       write('colosseum.name', name);
@@ -63,6 +65,25 @@ export function startOnline(code, local) {
     window.colosseumShow(client && o.state === 'playing' ? JSON.parse(client.view()) : null);
   }
 
+  // Ask first, so a missing password and a wrong code look different: the
+  // WebSocket upgrade can only fail without saying why.
+  async function start() {
+    if (o.state === 'login' || o.state === 'missing') o.state = 'connecting';
+    let status;
+    try {
+      status = (await fetch(`/api/online/games/${code}`)).status;
+    } catch {
+      status = 0;
+    }
+    if (status === 401) o.state = 'login';
+    else if (status === 404) o.state = 'missing';
+    else if (status === 200) { connect(); return; } else {
+      setTimeout(start, 3000);
+      return;
+    }
+    window.colosseumShow(null);
+  }
+
   function connect() {
     const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
     ws = new WebSocket(`${proto}//${location.host}/ws/${code}`);
@@ -74,14 +95,9 @@ export function startOnline(code, local) {
     ws.onmessage = (e) => receive(JSON.parse(e.data));
     ws.onclose = () => {
       ws = null;
-      if (!everOpened) {
-        // The server refuses the upgrade for an unknown code.
-        o.state = 'missing';
-        window.colosseumShow(null);
-        return;
-      }
-      const wait = Math.min(15000, 1000 * 2 ** retry++);
-      setTimeout(connect, wait);
+      // Ask again before retrying: the game may be gone or the login expired.
+      const wait = everOpened ? Math.min(15000, 1000 * 2 ** retry++) : 3000;
+      setTimeout(start, wait);
     };
   }
 
@@ -104,7 +120,8 @@ export function startOnline(code, local) {
     }
     you = h.you;
     if (you.token) write(TOKEN(code), you.token);
-    client = new OnlineClient(code, JSON.stringify(seats), seed, JSON.stringify(h.history), JSON.stringify(h.names), you.seat ?? -1);
+    client = new OnlineClient(code, JSON.stringify(seats), seed, JSON.stringify(h.history), JSON.stringify(shownNames()), you.seat ?? -1);
+    if (o.standIn.length === seats.length) client.set_stand_ins(JSON.stringify(o.standIn));
     o.state = you.seat !== null || watching ? 'playing' : 'join';
     show();
     maybeBot();
@@ -131,13 +148,29 @@ export function startOnline(code, local) {
     maybeBot();
   }
 
+  // Names as the bench shows them: "Ann · bot" while a bot stands in,
+  // "Ann · away" while Ann isn't connected.
+  function shownNames() {
+    return o.names.map((n, i) => {
+      if (!n) return n;
+      if (o.standIn[i]) return `${n} · bot`;
+      if (o.connected.length && !o.connected[i] && seats[i] === 'human') return `${n} · away`;
+      return n;
+    });
+  }
+
   function seatsUpdate(s) {
     o.names = s.names;
     o.connected = s.connected;
+    o.standIn = s.stand_in;
     botRunner = s.bot_runner;
-    if (client) client.set_names(JSON.stringify(s.names));
+    const names = shownNames();
+    if (client) {
+      client.set_names(JSON.stringify(names));
+      client.set_stand_ins(JSON.stringify(s.stand_in));
+    }
     if (o.state === 'join') window.colosseumShow(null);
-    else window.colosseumPatch((v) => { if (v.online) v.online.names = s.names; });
+    else window.colosseumPatch((v) => { if (v.online) v.online.names = names; });
     maybeBot();
   }
 

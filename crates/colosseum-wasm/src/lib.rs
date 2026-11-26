@@ -63,6 +63,10 @@ impl Default for Local {
 pub struct OnlineClient {
     id: String,
     session: Session,
+    /// Human seats the server has a bot standing in for.
+    stand_in: Vec<bool>,
+    /// The stand-in bots, made the first time each one plays.
+    stand_in_bots: Vec<Option<Bot>>,
 }
 
 #[wasm_bindgen]
@@ -92,9 +96,12 @@ impl OnlineClient {
             me: usize::try_from(me).ok(),
             names,
         });
+        let n = session.seats.len();
         Ok(OnlineClient {
             id: id.to_string(),
             session,
+            stand_in: vec![false; n],
+            stand_in_bots: (0..n).map(|_| None).collect(),
         })
     }
 
@@ -116,7 +123,17 @@ impl OnlineClient {
         self.session
             .game
             .current_player()
-            .is_some_and(|p| self.session.seats[p.0] != SeatKind::Human)
+            .is_some_and(|p| self.session.seats[p.0] != SeatKind::Human || self.stand_in[p.0])
+    }
+
+    /// Which human seats a bot is standing in for (JSON list of booleans).
+    pub fn set_stand_ins(&mut self, stand_in: &str) -> Result<(), String> {
+        let stand_in: Vec<bool> = serde_json::from_str(stand_in).map_err(|e| e.to_string())?;
+        if stand_in.len() != self.stand_in.len() {
+            return Err("wrong number of seats".into());
+        }
+        self.stand_in = stand_in;
+        Ok(())
     }
 
     pub fn set_names(&mut self, names: &str) -> Result<(), String> {
@@ -148,9 +165,19 @@ impl OnlineClient {
         if !self.bot_to_act() {
             return None;
         }
-        self.session
-            .bot_action()
-            .map(|a| serde_json::to_string(&a).expect("actions serialize"))
+        let p = self.session.game.current_player()?.0;
+        let action = if self.session.seats[p] == SeatKind::Human {
+            // Seeded like the seat's own bot would be (see make_bots).
+            let seed = self.session.game.seed().wrapping_add(p as u64 + 1);
+            let bot = self.stand_in_bots[p].get_or_insert_with(|| {
+                make_bot(SeatKind::LiveInput, seed).expect("live-input is built in")
+            });
+            let legal = self.session.game.legal_actions();
+            bot.choose_action(&self.session.game, &legal)
+        } else {
+            self.session.bot_action()?
+        };
+        Some(serde_json::to_string(&action).expect("actions serialize"))
     }
 }
 
@@ -171,7 +198,12 @@ mod tests {
         let seats = r#"["human","human","live-input"]"#;
         let mut a = OnlineClient::new("g", seats, 11.0, "[]", r#"["Ann","Bo",""]"#, 0).unwrap();
         let mut b = OnlineClient::new("g", seats, 11.0, "[]", r#"["Ann","Bo",""]"#, 1).unwrap();
-        for _ in 0..400 {
+        for i in 0..400 {
+            if i == 60 {
+                // Bo's browser goes quiet: the server stands a bot in.
+                a.set_stand_ins("[false,true,false]").unwrap();
+                b.set_stand_ins("[false,true,false]").unwrap();
+            }
             let cur = a.current_player();
             if cur < 0 {
                 break;

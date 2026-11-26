@@ -1,11 +1,13 @@
 # Online play: impresario.arc5.io
 
-Status: milestones 1–2 done. The GUI runs in the browser from WebAssembly, and `crates/colosseum-worker` relays online games between browsers. It has been tested locally with `wrangler dev`, not yet deployed. Work continues on the `online` branch.
+Status: milestones 1–3 done. The GUI runs in the browser from WebAssembly, and `crates/colosseum-worker` relays online games between browsers behind a shared password. Absent players can be stood in for by a bot or taken over. It has been tested locally with `wrangler dev`, not yet deployed. Work continues on the `online` branch.
 
 Run it locally:
 ```bash
 crates/colosseum-wasm/build.sh                     # dist/: page + engine (needs the wasm32 target and wasm-bindgen-cli 0.2.130)
+echo 'SITE_PASSWORD=pick a passphrase' > crates/colosseum-worker/.dev.vars   # gitignored; without it every request gets 503
 cd crates/colosseum-worker && npx wrangler dev     # needs worker-build 0.9 (cargo install worker-build)
+                                                   # add --var STANDIN_SECONDS:5 to see stand-ins quickly
 ```
 Open http://127.0.0.1:8787, set seats to Human or Live-input, and press **Create online game**. Share the `?g=CODE` link.
 
@@ -52,11 +54,11 @@ Play remotely with a few friends at `impresario.arc5.io`, on Cloudflare's free t
 - **Server → client:**
   - `{"hello": {"seats", "seed", "history", "names", "you": {"seat", "token"}}}`
   - `{"applied": {"index", "action"}}`: sent to everyone, the sender included.
-  - `{"seats": {"names", "connected", "bot_runner"}}`: on every join and leave.
+  - `{"seats": {"names", "connected", "bot_runner", "stand_in"}}`: on every join and leave, and when a bot stands in.
   - `{"error": {"message"}}`: sent to the sender only.
 - The server checks, before storing and broadcasting a move:
   - `index == history.len()`;
-  - the socket holds the seat to act, or that seat is a bot and the socket's seat is `bot_runner`;
+  - the socket holds the seat to act, or that seat is a bot (or stood in) and the socket's seat is `bot_runner`;
   - the engine accepts the move.
 - `bot_runner` is the seat of the earliest-joined connected socket. It moves to another player when that browser leaves.
 - Seeds are at most 52 bits, because they pass through JavaScript numbers.
@@ -65,26 +67,28 @@ Play remotely with a few friends at `impresario.arc5.io`, on Cloudflare's free t
   - Undo is off; Replay works locally.
 
 ## Access control (shared password)
-- Store the password as a Worker secret (`SITE_PASSWORD`). The user picks a passphrase of 3–4 words.
-- `POST /api/login {password}`:
-  - Compare in constant time.
-  - On success, set cookie `imp_auth`: HttpOnly, Secure, SameSite=Lax, 30 days. Its value is an HMAC of the expiry, keyed by a key derived from the password, so changing the password logs everyone out.
-  - Rate-limit to 5 attempts per minute per IP (Workers rate-limiting binding, or a counter in a Durable Object).
-- Only `/api/*` and `/ws/*` check the cookie. Static Pages assets stay public, so they cost no Function requests.
-- The GUI shows a password prompt whenever an API call returns 401.
+- **The password:** the Worker secret `SITE_PASSWORD` (`npx wrangler secret put SITE_PASSWORD`; `.dev.vars` locally). Use a passphrase of 3–4 words. Without it the Worker answers 503 to everything except static files (fail closed).
+- **`POST /api/login {password}`:**
+  - **Rate limit:** 5 tries per minute per `CF-Connecting-IP`, counted in memory by one `LoginLimiter` Durable Object; over the limit gives 429. The Workers rate-limit binding was skipped because its free-plan availability couldn't be confirmed.
+  - **Check:** HMACs of the given and real passwords compared with `verify_slice`, which is constant time. A wrong password gives 401.
+  - **Cookie:** on success, `imp_auth=<expiry ms>.<hex HMAC-SHA256(SHA-256("colosseum-auth-v1:" + password), expiry)>`, set with `HttpOnly; SameSite=Lax; Path=/; Max-Age=30 days`, plus `Secure` over https. Changing the password signs everyone out.
+- **What the cookie guards:** every other Worker route: `POST /api/online/games`, `GET /api/online/games/{code}` (200 if the game exists, 404 if not) and `/ws/{code}`. Static assets stay public and free.
+- **The page:** `online.js` asks `GET /api/online/games/{code}` before opening the WebSocket. 401 shows the password screen (`renderLogin` in `app.js`); so does a 401 from **Create online game**. After logging in, the page carries on where it was.
 - Known risks, accepted:
   - The password can spread; fix by changing it.
   - Player names aren't authenticated.
   - Quota exhaustion takes the site down until 00:00 UTC, with no bill.
 
 ## Joining and rejoining (user decisions)
-- **Create:** the creator picks the seats (human or bot kind). The server returns a 4–6 character game code and the link `impresario.arc5.io/g/<code>`. There is no lobby list; you get into a game only through its link or code.
+- **Create:** the creator picks the seats (human or live-input). The server returns a 6-character game code; the link is `impresario.arc5.io/?g=<code>`. There is no lobby list; you get into a game only through its link or code.
 - **Join:** open the link, enter a name (remembered in localStorage), pick an open human seat. The server issues a random 128-bit seat token, stored in localStorage under the game code.
 - **Rejoin, same browser:** reconnects automatically with the stored token.
-- **Rejoin, other device:** anyone with the password can claim a human seat whose player is not currently connected. Claiming issues a new token, and any old token stops working.
+- **Rejoin, other device:** anyone with the password can take over a human seat whose player isn't connected (the **Take over** button on the join screen sends `join {seat, name}`). It issues a new token; the old one stops working, so the old browser gets the join screen. An empty name keeps the old one.
 - **Dropouts (auto-bot):**
-  - When the seat to act has had no connected player for 2 minutes, a Durable Object alarm marks it `bot_controlled` with the `live-input` bot and broadcasts that.
-  - The client on bot duty plays that seat until a player reconnects or claims it. Control then returns to the player at their next decision.
+  - **Countdown:** after every join, leave and accepted move, the object checks whether the seat to act is a human seat with no connected socket. If so, it sets an alarm `STANDIN_SECONDS` later (`[vars]`, 120 by default), unless one is already set. If not, it deletes the alarm, so a stale one can't fire early.
+  - **When the alarm fires:** if the seat is still empty, the object sets `stand_in[seat]`, stores it and broadcasts it in `seats`. The bot runner's browser then plays that seat with a live-input bot (`OnlineClient::bot_action`), and the server accepts those moves like any bot seat's.
+  - **Shown as:** benches show "Ann · bot" while a bot stands in and "Ann · away" while Ann is disconnected.
+  - **Ending it:** when a player rejoins or takes over the seat, the stand-in ends and they play their next decision.
 - **Bot duty:** assigned to the creator if connected, otherwise to the connected client that joined earliest. When the client on duty disconnects, the Durable Object passes duty to the next one.
 - **Spectators:** connect without a seat and receive the same move stream.
 
@@ -111,7 +115,14 @@ Play remotely with a few friends at `impresario.arc5.io`, on Cloudflare's free t
    - out-of-turn, stale-index and spectator moves are rejected;
    - games survive a restart;
    - bot duty moves to another player when the runner leaves.
-3. Password gate, invite links, claiming and reclaiming seats, auto-bot after timeout, bot duty passed to another client.
+3. ✅ Password gate, invite links, claiming and reclaiming seats, auto-bot after timeout, bot duty passed to another client. Tested through `wrangler dev`:
+   - **Gate, raw HTTP and WebSocket:** without the cookie, create, exists and the WebSocket all get 401. A wrong password gets 401, and the 6th try in a minute gets 429. A tampered or expired cookie gets 401. Changing the password signs old cookies out. With no password set, the server answers 503.
+   - **Three Playwright browsers:**
+     - A logs in through the password screen (a wrong password first) and creates the game; B logs in and joins.
+     - B closes: A sees "Bo · away", then "Bo · bot" about 3 s into B's turn (`STANDIN_SECONDS:3`), and the game keeps going.
+     - C logs in and uses **Take over** on B's seat.
+     - B returns: its token has been dropped, so it gets the join screen.
+     - A and C finish the game in the same state.
 4. D1 archive plus past-games page.
 5. Deploy to impresario.arc5.io.
 

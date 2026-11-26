@@ -233,11 +233,60 @@ function renderSetup() {
 }
 
 // ---------- online play (see crates/colosseum-wasm/web/online.js) ----------
+// The site password screen: shown when the server answers 401, then `then`
+// runs (retry creating the game, or connect to it).
+let login = null; // {then, error, busy}
+
+async function submitLogin() {
+  const password = document.getElementById('password').value;
+  login.busy = true;
+  login.error = '';
+  render();
+  try {
+    const res = await fetch('/api/login', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ password }),
+    });
+    if (res.ok) {
+      const then = login.then;
+      login = null;
+      then();
+      render();
+      return;
+    }
+    login.error = res.status === 429 ? 'Too many tries. Wait a minute and try again.'
+      : res.status === 401 ? 'Wrong password.' : `The server said ${res.status}.`;
+  } catch {
+    login.error = "Couldn't reach the game server.";
+  }
+  login.busy = false;
+  render();
+  document.getElementById('password')?.focus();
+}
+
+function renderLogin() {
+  return `
+    <div class="setup">
+      <h1>Colosseum</h1>
+      <div class="muted">Online games are for friends. Enter the password you were given.</div>
+      <form class="card" id="loginform"><h3>Password</h3>
+        <input class="input" id="password" type="password" autocomplete="current-password" ${login.busy ? 'disabled' : ''}>
+        ${login.error ? `<div class="hint" style="color:#a8241a;margin-top:8px">${esc(login.error)}</div>` : ''}
+        <div class="btns" style="margin-top:12px"><button class="btn primary big" type="submit" ${login.busy ? 'disabled' : ''}>Enter</button></div>
+      </form>
+    </div>`;
+}
+
 async function createOnline() {
   try {
     const res = await fetch('/api/online/games', {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ seats: setup.seats }),
     });
+    if (res.status === 401) {
+      login = { then: createOnline, error: '', busy: false };
+      render();
+      document.getElementById('password')?.focus();
+      return;
+    }
     const json = await res.json();
     if (!res.ok) throw new Error(json.error || res.statusText);
     location.href = `${location.pathname}?g=${json.code}`;
@@ -271,7 +320,11 @@ function renderJoin() {
     const taken = o.names[i];
     let right;
     if (kind !== 'human') right = `<span class="muted">${SEAT_LABEL[kind] || kind} bot</span>`;
-    else if (taken) right = `<span class="muted">${esc(taken)}${o.connected[i] ? '' : ' (away)'}</span>`;
+    else if (taken && o.connected[i]) right = `<span class="muted">${esc(taken)}</span>`;
+    else if (taken) {
+      right = `<span class="muted">${esc(taken)} (away${o.standIn[i] ? ', a bot is playing' : ''})</span>
+        <button class="btn small" title="Play this seat from here; ${esc(taken)}'s old browser loses it" data-h="${on(() => o.join(i, document.getElementById('pname').value))}">Take over</button>`;
+    }
     else right = `<button class="btn small primary" data-h="${on(() => o.join(i, document.getElementById('pname').value))}">Sit here</button>`;
     return `<div class="seat-row"><span class="dot" style="--pc:${pColor(i)}"></span><b style="width:28px">P${i + 1}</b><span class="spacer"></span>${right}</div>`;
   }).join('');
@@ -1319,6 +1372,14 @@ function lastMoveLine(i) {
 function render() {
   handlers = [];
   if (ringObserver) { ringObserver.disconnect(); ringObserver = null; }
+  if (login || (!view && window.colosseumOnline && window.colosseumOnline.state === 'login')) {
+    if (!login) login = { then: () => window.colosseumOnline.start(), error: '', busy: false };
+    document.body.classList.remove('playing');
+    $app.innerHTML = renderLogin();
+    const form = document.getElementById('loginform');
+    form.onsubmit = (e) => { e.preventDefault(); if (!login.busy) submitLogin(); };
+    return;
+  }
   if (!view) {
     document.body.classList.remove('playing');
     $app.innerHTML = window.colosseumOnline ? renderJoin() : renderSetup();
